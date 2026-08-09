@@ -49,8 +49,7 @@ export default function DatabasePage() {
   const [sqlOpen, setSqlOpen] = useState(false);
   const [sqlQuery, setSqlQuery] = useState("");
   const [sqlResult, setSqlResult] = useState<{ columns: string[]; data: any[] } | null>(null);
-  const [sqlError, setSqlError] = useState("");
-
+  
 
   const tableLabels: Record<string, string> = {
     schedules: t("db.tableSchedules"),
@@ -97,7 +96,6 @@ export default function DatabasePage() {
   };
 
   const handleSqlExecute = async () => {
-    setSqlError("");
     setSqlResult(null);
     try {
       const res = await api.database.query(sqlQuery) as any;
@@ -109,7 +107,7 @@ export default function DatabasePage() {
         setSqlResult({ columns: res.columns, data: res.data });
       }
     } catch (e: any) {
-      setSqlError(e.message || "Query failed");
+      toaster.create({ title: "Query Error", description: e.message || "Query failed", type: "error" });
     }
   };
 
@@ -446,11 +444,7 @@ export default function DatabasePage() {
                           </Button>
                         </HStack>
                         
-                        {sqlError && (
-                          <Box p={3} color="var(--sw-red-normal)" border="1px solid var(--sw-red-normal)" borderRadius="md" bg="transparent" fontFamily="'IBM Plex Mono', monospace" fontSize="sm">
-                            {sqlError}
-                          </Box>
-                        )}
+                        
 
                         {sqlResult && (
                           <Box overflowX="auto" border="1px solid var(--sw-border-color)" borderRadius="md">

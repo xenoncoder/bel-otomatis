@@ -242,7 +242,7 @@ export default function ScheduleTable({ schedules, loading, onDelete, onEdit, on
                   display="flex" alignItems="center" justifyContent="center"
                   flexShrink={0}
                 >
-                  <FiAlertTriangle size={18} color="#ba797f" />
+                  <FiAlertTriangle size={18} color="var(--sw-pink-dark)" />
                 </Box>
                 <Text fontSize="sm" color="var(--sw-fg-muted)">
                   {t("schedules.deleteConfirm", { label: pendingDelete?.label ?? "", time: pendingDelete?.start_time ?? "" })}

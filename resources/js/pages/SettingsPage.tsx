@@ -391,16 +391,16 @@ export default function SettingsPage() {
             </Dialog.Header>
             <Dialog.Body>
               <VStack gap={3} align="stretch">
-                <Text fontSize="sm" color="var(--sw-fg-muted)">{t("settings.backupConfirmBody")}</Text>
+                <Text fontSize="sm" color="var(--sw-fg)" fontWeight="600">{t("settings.backupConfirmBody")}</Text>
                 <Box p={3} borderRadius="var(--sw-radius)" bg="var(--sw-bg-muted)" border="1px solid var(--sw-border-color)">
-                  <VStack gap={1} align="stretch" fontSize="xs" color="var(--sw-fg-muted)">
+                  <VStack gap={1} align="stretch" fontSize="sm" color="var(--sw-fg)" fontWeight="600">
                     <Text>{t("settings.backupItem1")}</Text>
                     <Text>{t("settings.backupItem2")}</Text>
                     <Text>{t("settings.backupItem3")}</Text>
                     <Text>{t("settings.backupItem4")}</Text>
                   </VStack>
                 </Box>
-                <Text fontSize="sm" color="var(--sw-fg-muted)">{t("settings.backupConfirmQ")}</Text>
+                <Text fontSize="sm" color="var(--sw-fg)" fontWeight="600">{t("settings.backupConfirmQ")}</Text>
               </VStack>
             </Dialog.Body>
             <Dialog.Footer>
@@ -428,7 +428,7 @@ export default function SettingsPage() {
             </Dialog.Header>
             <Dialog.Body>
               <VStack gap={3} align="stretch">
-                <Text fontSize="sm" color="var(--sw-fg-muted)">{t("settings.restoreFile")}</Text>
+                <Text fontSize="sm" color="var(--sw-fg)" fontWeight="600">{t("settings.restoreFile")}</Text>
                 <Box p={3} borderRadius="var(--sw-radius)" bg="var(--sw-bg-muted)" border="1px solid var(--sw-border-color)">
                   <Text fontSize="sm" fontFamily="'IBM Plex Mono', monospace" fontWeight="600" color="var(--sw-fg)" wordBreak="break-all">
                     {pendingFile?.name}
@@ -441,7 +441,7 @@ export default function SettingsPage() {
                   <Box p={3} borderRadius="var(--sw-radius)" bg="var(--sw-pink-light)" border="1px solid var(--sw-pink-dark)">
                     <HStack gap={2} align="start">
                       <Box as={FiAlertTriangle} color="var(--sw-pink-dark)" flexShrink={0} mt="2px" />
-                      <Text fontSize="xs" color="var(--sw-pink-dark)">
+                      <Text fontSize="sm" color="var(--sw-pink-dark)" fontWeight="700">
                         {t("settings.restoreOverwriteWarning")}
                       </Text>
                     </HStack>
@@ -451,7 +451,7 @@ export default function SettingsPage() {
                     {t("settings.restoreNormalInfo")}
                   </Text>
                 )}
-                <Text fontSize="sm" color="var(--sw-fg-muted)" fontWeight="600">{t("settings.restoreConfirmQ")}</Text>
+                <Text fontSize="sm" color="var(--sw-fg)" fontWeight="700">{t("settings.restoreConfirmQ")}</Text>
               </VStack>
             </Dialog.Body>
             <Dialog.Footer>
