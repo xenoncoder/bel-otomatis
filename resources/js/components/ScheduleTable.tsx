@@ -174,12 +174,9 @@ export default function ScheduleTable({ schedules, loading, onDelete, onEdit, on
           <IconButton
             aria-label={t("table.editSchedule")}
             size="sm"
+            className="sw-btn sw-btn-primary"
             variant="ghost"
-            color="var(--sw-blue-normal)"
-            bg="color-mix(in srgb, var(--sw-blue-normal) 15%, transparent)"
             borderRadius="full"
-            _hover={{ transform: "scale(1.1)", bg: "color-mix(in srgb, var(--sw-blue-normal) 25%, transparent)" }}
-            transition="all 0.2s"
             onClick={() => onEdit(s)}
           >
             <FiEdit2 />
@@ -187,12 +184,9 @@ export default function ScheduleTable({ schedules, loading, onDelete, onEdit, on
           <IconButton
             aria-label="Copy Schedule"
             size="sm"
+            className="sw-btn sw-btn-success"
             variant="ghost"
-            color="var(--sw-green-normal)"
-            bg="color-mix(in srgb, var(--sw-green-normal) 15%, transparent)"
             borderRadius="full"
-            _hover={{ transform: "scale(1.1)", bg: "color-mix(in srgb, var(--sw-green-normal) 25%, transparent)" }}
-            transition="all 0.2s"
             onClick={() => onCopy(s)}
           >
             <FiCopy />
@@ -200,12 +194,9 @@ export default function ScheduleTable({ schedules, loading, onDelete, onEdit, on
           <IconButton
             aria-label={t("table.deleteSchedule")}
             size="sm"
+            className="sw-btn sw-btn-danger"
             variant="ghost"
-            color="var(--sw-pink-normal)"
-            bg="color-mix(in srgb, var(--sw-pink-normal) 15%, transparent)"
             borderRadius="full"
-            _hover={{ transform: "scale(1.1)", bg: "color-mix(in srgb, var(--sw-pink-normal) 25%, transparent)" }}
-            transition="all 0.2s"
             onClick={() => setPendingDelete(s)}
           >
             <FiTrash2 />

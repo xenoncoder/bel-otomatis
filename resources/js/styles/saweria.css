@@ -1268,7 +1268,7 @@ select:focus {
   color: #ffffff !important;
   border-color: var(--sw-border-color) !important;
 }
-.sw-btn-primary:hover { background-color: var(--sw-purple-dark) !important; }
+.sw-btn-primary:hover { background-color: var(--sw-purple-dark) !important; color: #ffffff !important; }
 
 /* Success (Green) */
 .sw-btn-success {
@@ -1276,7 +1276,7 @@ select:focus {
   color: #ffffff !important;
   border-color: var(--sw-border-color) !important;
 }
-.sw-btn-success:hover { background-color: var(--sw-green-dark) !important; }
+.sw-btn-success:hover { background-color: var(--sw-green-dark) !important; color: #ffffff !important; }
 
 /* Danger (Pink) */
 .sw-btn-danger {
@@ -1284,7 +1284,7 @@ select:focus {
   color: #ffffff !important;
   border-color: var(--sw-border-color) !important;
 }
-.sw-btn-danger:hover { background-color: var(--sw-pink-dark) !important; }
+.sw-btn-danger:hover { background-color: var(--sw-pink-dark) !important; color: #ffffff !important; }
 
 /* Warning (Yellow) */
 .sw-btn-warning {

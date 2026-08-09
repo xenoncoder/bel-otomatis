@@ -263,7 +263,9 @@ export default function SchedulesPage() {
             <TimePicker label={t("schedules.startTime")} value={f.start_time} onChange={(v) => setter("start_time", v)} />
           </Field.Root>
           <Field.Root flex={1} w={{ base: "full", sm: "auto" }} minW={0}>
-            <Field.Label fontSize="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="700">{t("common.label")}</Field.Label>
+            <Field.Label fontSize="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="700"
+                    flex={{ base: "1 1 auto", sm: "none" }}
+                    justifyContent="center">{t("common.label")}</Field.Label>
             <Input
               placeholder={t("schedules.labelPlaceholder")}
               border="1px solid var(--sw-border-color)"
@@ -302,7 +304,7 @@ export default function SchedulesPage() {
                   key={opt.value}
                   as="button"
                   onClick={() => setter("recurrence", opt.value)}
-                  px={3} py={2}
+                  px={3} py={{ base: 1.5, md: 2 }}
                   borderRadius="var(--sw-radius)"
                   border="1px solid var(--sw-border-color)"
                   bg={isActive ? "var(--sw-purple-normal)" : "var(--sw-bg-panel)"}
@@ -360,7 +362,9 @@ export default function SchedulesPage() {
         </HStack>
         <VStack gap={3} align="stretch">
             <Field.Root w={{ base: "full", sm: "350px" }}>
-              <Field.Label fontSize="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="700">{t("schedules.bellSound")}</Field.Label>
+              <Field.Label fontSize="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="700"
+                    flex={{ base: "1 1 auto", sm: "none" }}
+                    justifyContent="center">{t("schedules.bellSound")}</Field.Label>
               <HStack gap={2} w="full">
                 <Box flex={1}>
                   <BellSoundPicker
@@ -396,7 +400,9 @@ export default function SchedulesPage() {
             </Field.Root>
 
           <Field.Root>
-            <Field.Label fontSize="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="700">{t("schedules.playMode")}</Field.Label>
+            <Field.Label fontSize="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="700"
+                    flex={{ base: "1 1 auto", sm: "none" }}
+                    justifyContent="center">{t("schedules.playMode")}</Field.Label>
             <HStack gap={2} wrap="wrap">
               {[
                 { value: "once_play" as RepeatMode, label: t("schedules.playOnce") },
@@ -431,7 +437,9 @@ export default function SchedulesPage() {
 
           {f.repeat_mode === "count" && (
             <Field.Root w="100px">
-              <Field.Label fontSize="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="700">{t("schedules.repeatCount")}</Field.Label>
+              <Field.Label fontSize="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="700"
+                    flex={{ base: "1 1 auto", sm: "none" }}
+                    justifyContent="center">{t("schedules.repeatCount")}</Field.Label>
               <Input
                 type="number"
                 min={1}
@@ -442,6 +450,8 @@ export default function SchedulesPage() {
                 textAlign="center"
                 fontFamily="'IBM Plex Mono', monospace"
                 fontWeight="700"
+                    flex={{ base: "1 1 auto", sm: "none" }}
+                    justifyContent="center"
                 value={f.repeat_count}
                 onChange={(e) => setter("repeat_count", e.target.value)}
               />
@@ -458,6 +468,8 @@ export default function SchedulesPage() {
           onClick={() => setAdvanced(!advanced)}
           fontFamily="'Comfortaa', sans-serif"
           fontWeight="700"
+                    flex={{ base: "1 1 auto", sm: "none" }}
+                    justifyContent="center"
           color="var(--sw-fg-muted)"
         >
           <FiSettings size={12} />
@@ -482,7 +494,9 @@ export default function SchedulesPage() {
                   />
                 </Field.Root>
                 <Field.Root>
-                  <Field.Label fontSize="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="700">{t("schedules.status")}</Field.Label>
+                  <Field.Label fontSize="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="700"
+                    flex={{ base: "1 1 auto", sm: "none" }}
+                    justifyContent="center">{t("schedules.status")}</Field.Label>
                   <Switch.Root
                     checked={f.is_active}
                     onCheckedChange={(e) => setter("is_active", e.checked)}
@@ -558,23 +572,24 @@ export default function SchedulesPage() {
         <Box className="sw-card-body" p={{ base: 4, md: 6 }}>
           <Tabs.Root value={activeDay} onValueChange={(e) => setActiveDay(e.value)}>
             <Tabs.List
-              overflowX="auto"
-              bg="var(--sw-bg-card)"
-              p={1}
-              borderRadius="var(--sw-radius)"
-              border="1px solid var(--sw-border-color)"
-              boxShadow="0.2rem 0.2rem 0 var(--sw-shadow-color)"
-              gap={1}
-              css={{ "&::-webkit-scrollbar": { display: "none" }, scrollbarWidth: "none" }}
-            >
+                flexWrap="wrap"
+                bg="var(--sw-bg-card)"
+                p={1.5}
+                borderRadius="var(--sw-radius)"
+                border="1px solid var(--sw-border-color)"
+                boxShadow="0.2rem 0.2rem 0 var(--sw-shadow-color)"
+                gap={2}
+              >
               {days.map((d) => (
                 <Tabs.Trigger
                   key={d.value}
                   value={d.value}
-                  px={4}
-                  py={2}
+                  px={{ base: 3, md: 4 }}
+                  py={{ base: 1.5, md: 2 }}
                   borderRadius="var(--sw-radius)"
                   fontWeight="700"
+                    flex={{ base: "1 1 auto", sm: "none" }}
+                    justifyContent="center"
                   fontFamily="'Comfortaa', sans-serif"
                   color="var(--sw-fg)"
                   _selected={{ bg: "var(--sw-purple-normal)", color: "#ffffff", boxShadow: "0.2rem 0.2rem 0 var(--sw-shadow-color)", transform: "translate(-2px, -2px)" }}

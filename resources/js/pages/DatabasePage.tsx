@@ -105,6 +105,7 @@ export default function DatabasePage() {
         toaster.create({ title: res.message, type: "success" });
         if (activeTable) loadTable(activeTable, searchQuery);
       } else {
+        toaster.create({ title: "Query executed successfully", type: "success" });
         setSqlResult({ columns: res.columns, data: res.data });
       }
     } catch (e: any) {

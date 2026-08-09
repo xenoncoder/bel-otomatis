@@ -26,11 +26,21 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         </BrowserRouter>
         <Toaster toaster={toaster}>
           {(toast) => (
-            <Toast.Root key={toast.id}>
-              <Toast.Indicator />
-              <Toast.Title>{toast.title}</Toast.Title>
-              {toast.description && <Toast.Description>{toast.description}</Toast.Description>}
-              <Toast.CloseTrigger />
+            <Toast.Root 
+              key={toast.id} 
+              bg={toast.type === "success" ? "var(--sw-green-light)" : toast.type === "error" ? "var(--sw-pink-light)" : "var(--sw-bg-panel)"}
+              border="2px solid var(--sw-border-color)" 
+              boxShadow="0.3rem 0.3rem 0 var(--sw-shadow-color)"
+              borderRadius="var(--sw-radius)"
+              p={3}
+              color="var(--sw-fg)"
+              fontFamily="'Comfortaa', sans-serif"
+              fontWeight="700"
+            >
+              <Toast.Indicator color={toast.type === "success" ? "var(--sw-green-dark)" : toast.type === "error" ? "var(--sw-pink-dark)" : "var(--sw-purple-normal)"} />
+              <Toast.Title color={toast.type === "success" ? "var(--sw-green-dark)" : toast.type === "error" ? "var(--sw-pink-dark)" : "var(--sw-fg)"}>{toast.title}</Toast.Title>
+              {toast.description && <Toast.Description fontFamily="'IBM Plex Mono', monospace" fontSize="sm" color={toast.type === "success" ? "var(--sw-green-dark)" : toast.type === "error" ? "var(--sw-pink-dark)" : "var(--sw-fg-muted)"}>{toast.description}</Toast.Description>}
+              <Toast.CloseTrigger color="var(--sw-fg)" _hover={{ bg: "transparent", transform: "scale(1.1)" }} />
             </Toast.Root>
           )}
         </Toaster>

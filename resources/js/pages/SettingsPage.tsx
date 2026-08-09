@@ -4,7 +4,7 @@ import { toaster } from "@/lib/toaster";
 import { api } from "@/lib/api";
 import { useT } from "@/lib/i18n";
 import {
-  Box, Button, Checkbox, Dialog, Field, HStack, Heading, Input, Text, VStack, MenuRoot, MenuTrigger, MenuContent, MenuItem,
+  Box, Button, Grid, Checkbox, Dialog, Field, HStack, Heading, Input, Text, VStack, MenuRoot, MenuTrigger, MenuContent, MenuItem,
 } from "@chakra-ui/react";
 import { FiDownload, FiUpload, FiSave, FiAlertTriangle, FiChevronDown } from "react-icons/fi";
 import CloseButton from "@/components/CloseButton";
@@ -462,7 +462,7 @@ export default function SettingsPage() {
           </Dialog.Content>
         </Dialog.Positioner>
       </Dialog.Root>
-    </VStack>
+    </Grid>
     </Box>
   );
 }
