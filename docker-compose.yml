@@ -1,0 +1,26 @@
+services:
+  app:
+    build: .
+    container_name: bel-otomatis
+    ports:
+      - "8080:80"
+    volumes:
+      - db-data:/var/www/html/database
+      - storage-data:/var/www/html/storage/app/public
+    environment:
+      APP_NAME: "Bel Otomatis"
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: "http://localhost:8080"
+      APP_TIMEZONE: Asia/Jakarta
+      APP_LOCALE: id
+      DB_CONNECTION: sqlite
+      SESSION_DRIVER: database
+      FILESYSTEM_DISK: public
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+    restart: unless-stopped
+
+volumes:
+  db-data:
+  storage-data:
