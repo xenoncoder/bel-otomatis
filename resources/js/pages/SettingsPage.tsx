@@ -96,6 +96,7 @@ export default function SettingsPage() {
         {t("settings.title")}
       </Heading>
 
+      <Grid templateColumns={{ base: "1fr", lg: "1fr 1fr" }} gap={6} alignItems="start">
       {/* Config card with green header */}
       <Box className="sw-card" borderRadius="var(--sw-radius)">
         <Box className="sw-card-header sw-card-header-green">
@@ -377,6 +378,8 @@ export default function SettingsPage() {
         </Box>
       </Box>
 
+      </Grid>
+
       {/* Dialog: Export confirmation */}
       <Dialog.Root open={exportOpen} onOpenChange={(e) => setExportOpen(e.open)} placement="center">
         <Dialog.Backdrop />
@@ -462,7 +465,7 @@ export default function SettingsPage() {
           </Dialog.Content>
         </Dialog.Positioner>
       </Dialog.Root>
-    </Grid>
+    </VStack>
     </Box>
   );
 }

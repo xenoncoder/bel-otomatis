@@ -26,7 +26,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         </BrowserRouter>
         <Toaster toaster={toaster}>
           {(toast) => (
-            <Toast.Root key={toast.id} className={sw-toast sw-toast-\}>
+            <Toast.Root key={toast.id} className={`sw-toast sw-toast-${toast.type}`}>
               <Box display="flex" alignItems="flex-start" gap={3}>
                 <Toast.Indicator className="sw-toast-icon" />
                 <Box flex="1">
