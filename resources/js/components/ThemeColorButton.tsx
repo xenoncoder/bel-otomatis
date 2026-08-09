@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { IconButton, Box, HStack, Text } from "@chakra-ui/react";
 import { FiDroplet } from "react-icons/fi";
 import { useThemeColor, type AccentColor } from "@/lib/theme-color";
 import { useT } from "@/lib/i18n";
@@ -37,43 +36,21 @@ export default function ThemeColorButton() {
 
   return (
     <>
-      <IconButton
-        ref={btnRef as never}
+      <button
+        ref={btnRef}
+        type="button"
         aria-label={t("theme.color")}
-        variant="ghost"
-        size="sm"
-        borderRadius="var(--sw-radius)"
-        border="2px solid var(--sw-border-color)"
-        bg="var(--sw-bg-card)"
-        boxShadow="0.2rem 0.2rem 0 var(--sw-shadow-color)"
+        className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors bg-white/50 dark:bg-black/20 hover:bg-white/80 dark:hover:bg-white/10 border border-white/20 dark:border-white/10 relative shadow-sm"
         onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}
-        color="var(--sw-fg)"
-        _hover={{
-          bg: "var(--sw-bg-hover)",
-          transform: "translate(-0.05rem, -0.05rem)",
-          boxShadow: "0.2rem 0.2rem 0 var(--sw-shadow-color)",
-        }}
-        _active={{
-          transform: "translate(0.1rem, 0.1rem)",
-          boxShadow: "0.05rem 0.05rem 0 var(--sw-shadow-color)",
-        }}
-        transition="all 0.15s"
-        position="relative"
       >
-        <Box position="relative" display="flex" alignItems="center" justifyContent="center">
-          <FiDroplet size={14} strokeWidth={2.5} />
-          <Box
-            position="absolute"
-            bottom={-1}
-            right={-1}
-            w={2.5}
-            h={2.5}
-            borderRadius="50%"
-            border="2px solid var(--sw-border-color)"
-            bg={colors[accent].normal}
+        <div className="relative flex items-center justify-center">
+          <FiDroplet size={18} className="text-gray-700 dark:text-gray-300" strokeWidth={2.5} />
+          <div
+            className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900"
+            style={{ backgroundColor: colors[accent].normal }}
           />
-        </Box>
-      </IconButton>
+        </div>
+      </button>
 
       {open && createPortal(
         <div
@@ -83,27 +60,13 @@ export default function ThemeColorButton() {
             top: coords.top,
             left: coords.left,
             zIndex: 99999,
-            background: "var(--sw-bg-card)",
-            border: "1px solid var(--sw-border-color)",
-            borderRadius: "var(--sw-radius)",
-            boxShadow: "0.4rem 0.4rem 0 var(--sw-shadow-color)",
-            padding: "0.75rem",
-            animation: "sw-tooltip-in 0.1s ease-out",
           }}
+          className="w-[180px] p-3 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-xl animate-fade-in"
         >
-          <Text
-            fontSize="2xs"
-            fontFamily="'Comfortaa', sans-serif"
-            fontWeight="800"
-            textTransform="uppercase"
-            letterSpacing="0.05em"
-            color="var(--sw-fg-subtle)"
-            mb={2}
-            textAlign="center"
-          >
+          <p className="text-[10px] font-heading font-black uppercase tracking-widest text-gray-500 mb-2 text-center">
             {t("theme.color")}
-          </Text>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "0.5rem" }}>
+          </p>
+          <div className="grid grid-cols-4 gap-2">
             {colorKeys.map((key) => {
               const c = colors[key];
               const isActive = accent === key;
@@ -113,20 +76,11 @@ export default function ThemeColorButton() {
                   type="button"
                   onClick={() => { setAccent(key); setOpen(false); }}
                   title={t("theme.color." + key)}
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: "var(--sw-radius)",
-                    border: isActive ? "2px solid var(--sw-border-color)" : "1px solid var(--sw-border-color)",
-                    boxShadow: isActive ? "0.15rem 0.15rem 0 var(--sw-shadow-color)" : "none",
-                    background: c.normal,
-                    cursor: "pointer",
-                    transition: "all 0.15s",
-                    transform: isActive ? "none" : "scale(1)",
-                  }}
+                  className={`w-7 h-7 rounded-lg transition-all flex items-center justify-center ${isActive ? "border-2 border-gray-900 dark:border-white scale-110 shadow-md" : "border border-black/10 dark:border-white/10 scale-100 hover:scale-105"}`}
+                  style={{ backgroundColor: c.normal }}
                 >
                   {isActive && (
-                    <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "#fff", border: "1px solid #000" }} />
+                    <span className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />
                   )}
                 </button>
               );

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Box, Button, HStack, Input, Text, VStack } from "@chakra-ui/react";
 import { useT } from "@/lib/i18n";
+import { GlassButton, GlassInput } from "./ui/GlassComponents";
 
 function formatSec(sec: number): string {
   if (sec <= 0) return "00:00:00";
@@ -54,88 +54,62 @@ export default function Timer() {
   const total = inputH * 3600 + inputM * 60 + inputS;
 
   return (
-    <VStack gap={6} align="stretch">
-      <Box
-        className={done ? "sw-pulse" : ""}
-        p={{ base: 4, md: 8 }}
-        textAlign="center"
-        borderRadius="var(--sw-radius)"
-        bg={done ? "var(--sw-pink-light)" : "var(--sw-bg-muted)"}
-        border="2px solid var(--sw-border-color)"
-        boxShadow={done ? "0.4rem 0.4rem 0 var(--sw-shadow-color)" : "none"}
-      >
-        <Text
-          fontSize={{ base: "4xl", md: "7xl" }}
-          fontFamily="'IBM Plex Mono', monospace"
-          fontWeight="700"
-          letterSpacing="-0.03em"
-          color={done ? "var(--sw-pink-dark)" : "var(--sw-purple-normal)"}
-        >
+    <div className="flex flex-col gap-6">
+      <div className={`p-6 md:p-10 text-center rounded-2xl bg-black/5 dark:bg-white/5 border border-white/10 shadow-inner flex flex-col items-center justify-center transition-all ${done ? "bg-rose-500/20 border-rose-500/50 animate-pulse shadow-rose-500/20 shadow-xl" : ""}`}>
+        <p className={`text-5xl md:text-7xl font-body font-black tracking-tighter ${done ? "text-rose-600 dark:text-rose-400" : "text-indigo-600 dark:text-indigo-400"}`}>
           {formatSec(remaining)}
-        </Text>
+        </p>
         {done && (
-          <Text
-            fontSize="xl"
-            color="var(--sw-pink-dark)"
-            mt={2}
-            fontFamily="'Comfortaa', sans-serif"
-            fontWeight="800"
-          >
+          <p className="mt-4 font-bold text-lg text-rose-600 dark:text-rose-400">
             {t("timer.timeUp")}
-          </Text>
+          </p>
         )}
-      </Box>
+      </div>
 
       {!running && remaining === 0 && (
-        <HStack justify="center" gap={2} wrap="wrap">
+        <div className="flex justify-center flex-wrap gap-4">
           {[
             { label: t("timer.hours"), val: inputH, set: setInputH, max: 23 },
             { label: t("timer.minutes"), val: inputM, set: setInputM, max: 59 },
             { label: t("timer.seconds"), val: inputS, set: setInputS, max: 59 },
           ].map((f) => (
-            <VStack key={f.label} gap={1}>
-              <Input
+            <div key={f.label} className="flex flex-col items-center gap-2">
+              <GlassInput
                 type="number"
                 min={0}
                 max={f.max}
                 value={f.val}
-                onChange={(e) => f.set(Math.min(f.max, Math.max(0, Number(e.target.value) || 0)))}
-                w={{ base: "70px", sm: "80px" }}
-                textAlign="center"
-                fontSize="2xl"
-                fontFamily="'IBM Plex Mono', monospace"
-                border="1px solid var(--sw-border-color)"
-                borderRadius="var(--sw-radius)"
-                bg="var(--sw-bg-panel)"
+                onChange={(e: any) => f.set(Math.min(f.max, Math.max(0, Number(e.target.value) || 0)))}
+                className="w-20 text-center font-body font-bold text-xl !py-3"
               />
-              <Text fontSize="xs" color="var(--sw-fg-subtle)" fontFamily="'IBM Plex Mono', monospace">{f.label}</Text>
-            </VStack>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">{f.label}</p>
+            </div>
           ))}
-        </HStack>
+        </div>
       )}
 
-      <HStack justify="center" gap={3} wrap="wrap">
+      <div className="flex justify-center flex-wrap gap-3">
         {!running && remaining === 0 && (
-          <Button className="sw-btn sw-btn-success" variant="ghost" size="sm" onClick={handleStart} disabled={total <= 0}>
+          <GlassButton variant="success" onClick={handleStart} disabled={total <= 0}>
             {t("timer.start")}
-          </Button>
+          </GlassButton>
         )}
         {running && (
-          <Button className="sw-btn sw-btn-warning" variant="ghost" size="sm" onClick={handlePause}>
+          <GlassButton variant="warning" onClick={handlePause}>
             {t("timer.pause")}
-          </Button>
+          </GlassButton>
         )}
         {!running && remaining > 0 && (
-          <Button className="sw-btn sw-btn-success" variant="ghost" size="sm" onClick={() => setRunning(true)}>
+          <GlassButton variant="success" onClick={() => setRunning(true)}>
             {t("timer.resume")}
-          </Button>
+          </GlassButton>
         )}
         {remaining > 0 && (
-          <Button className="sw-btn sw-btn-danger" variant="ghost" size="sm" onClick={handleReset}>
+          <GlassButton variant="danger" onClick={handleReset}>
             {t("timer.reset")}
-          </Button>
+          </GlassButton>
         )}
-      </HStack>
-    </VStack>
+      </div>
+    </div>
   );
 }

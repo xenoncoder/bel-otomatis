@@ -1,4 +1,3 @@
-import { IconButton } from "@chakra-ui/react";
 import { useTheme } from "next-themes";
 import { FiMoon, FiSun } from "react-icons/fi";
 import { useEffect, useState } from "react";
@@ -12,34 +11,19 @@ export default function DarkModeToggle() {
   useEffect(() => setMounted(true), []);
 
   if (!mounted) {
-    return <IconButton aria-label="theme" variant="ghost" size="sm" pointerEvents="none" opacity={0} borderRadius="var(--sw-radius)" border="2px solid var(--sw-border-color)" />;
+    return <div className="w-10 h-10 rounded-xl border border-white/20 dark:border-white/10 opacity-0 pointer-events-none" />;
   }
 
   const isDark = theme === "dark";
 
   return (
-    <IconButton
+    <button
+      type="button"
       aria-label={isDark ? t("theme.light") : t("theme.dark")}
-      variant="ghost"
-      size="sm"
-      borderRadius="var(--sw-radius)"
-      border="2px solid var(--sw-border-color)"
-      bg="var(--sw-bg-card)"
-      boxShadow="0.2rem 0.2rem 0 var(--sw-shadow-color)"
+      className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors bg-white/50 dark:bg-black/20 hover:bg-white/80 dark:hover:bg-white/10 border border-white/20 dark:border-white/10 text-gray-700 dark:text-gray-300 shadow-sm"
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      color="var(--sw-fg)"
-      _hover={{
-        bg: "var(--sw-bg-hover)",
-        transform: "translate(-0.05rem, -0.05rem)",
-        boxShadow: "0.2rem 0.2rem 0 var(--sw-shadow-color)",
-      }}
-      _active={{
-        transform: "translate(0.1rem, 0.1rem)",
-        boxShadow: "0.05rem 0.05rem 0 var(--sw-shadow-color)",
-      }}
-      transition="all 0.15s"
     >
-      {isDark ? <FiSun size={14} strokeWidth={2.5} /> : <FiMoon size={14} strokeWidth={2.5} />}
-    </IconButton>
+      {isDark ? <FiSun size={18} strokeWidth={2.5} className="text-amber-500" /> : <FiMoon size={18} strokeWidth={2.5} className="text-indigo-500" />}
+    </button>
   );
 }

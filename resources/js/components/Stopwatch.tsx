@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Box, Button, HStack, Heading, Text, VStack } from "@chakra-ui/react";
 import { useT } from "@/lib/i18n";
+import { GlassButton } from "./ui/GlassComponents";
 
 function formatMs(ms: number): string {
   const totalSec = Math.floor(ms / 1000);
@@ -36,42 +36,42 @@ export default function Stopwatch() {
   const handleLap = () => { if (running) setLaps((l) => [...l, elapsed]); };
 
   return (
-    <VStack gap={6} align="stretch">
-      <Box p={{ base: 4, md: 8 }} textAlign="center" borderRadius="var(--sw-radius)" bg="var(--sw-bg-muted)" border="1px solid var(--sw-border-color)">
-        <Text
-          fontSize={{ base: "4xl", md: "7xl" }}
-          fontFamily="'IBM Plex Mono', monospace"
-          fontWeight="700"
-          letterSpacing="-0.03em"
-          color="var(--sw-purple-normal)"
-        >
+    <div className="flex flex-col gap-6">
+      <div className="p-6 md:p-10 text-center rounded-2xl bg-black/5 dark:bg-white/5 border border-white/10 shadow-inner">
+        <p className="text-4xl md:text-7xl font-body font-black tracking-tighter text-indigo-600 dark:text-indigo-400">
           {formatMs(elapsed)}
-        </Text>
-      </Box>
-      <HStack justify="center" gap={3} wrap="wrap">
-        <Button className="sw-btn sw-btn-success" variant="ghost" size="sm" onClick={handleStartPause}>
+        </p>
+      </div>
+      <div className="flex justify-center gap-3 flex-wrap">
+        <GlassButton variant={running ? "warning" : "success"} onClick={handleStartPause}>
           {running ? t("stopwatch.pause") : t("stopwatch.start")}
-        </Button>
-        <Button className="sw-btn" variant="ghost" size="sm" onClick={handleLap} disabled={!running}>
+        </GlassButton>
+        <GlassButton variant="primary" onClick={handleLap} disabled={!running}>
           {t("stopwatch.lap")}
-        </Button>
-        <Button className="sw-btn sw-btn-danger" variant="ghost" size="sm" onClick={handleReset}>
+        </GlassButton>
+        <GlassButton variant="danger" onClick={handleReset}>
           {t("stopwatch.reset")}
-        </Button>
-      </HStack>
+        </GlassButton>
+      </div>
       {laps.length > 0 && (
-        <Box className="sw-card" p={4} maxH="300px" overflowY="auto" overflowX="hidden" borderRadius="var(--sw-radius)">
-          <Heading size="xs" mb={3} color="var(--sw-fg-muted)" fontFamily="'Comfortaa', sans-serif" fontWeight="700">{t("stopwatch.lapTimes")}</Heading>
-          <VStack gap={1} align="stretch">
+        <div className="glass-panel p-4 max-h-[300px] overflow-y-auto">
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">
+            {t("stopwatch.lapTimes")}
+          </h3>
+          <div className="flex flex-col gap-2">
             {laps.map((lap, i) => (
-              <HStack key={i} justify="space-between" px={2} py={1} borderRadius="var(--sw-radius)" _hover={{ bg: "var(--sw-bg-hover)" }}>
-                <Text fontSize="sm" color="var(--sw-fg-subtle)" fontFamily="'IBM Plex Mono', monospace">{t("stopwatch.lapLabel", { n: i + 1 })}</Text>
-                <Text fontSize="sm" fontFamily="'IBM Plex Mono', monospace" fontWeight="600">{formatMs(lap)}</Text>
-              </HStack>
+              <div key={i} className="flex justify-between items-center px-3 py-2 rounded-xl bg-white/20 dark:bg-white/5 border border-white/10">
+                <span className="text-sm font-bold text-gray-500">
+                  {t("stopwatch.lapLabel", { n: i + 1 })}
+                </span>
+                <span className="text-sm font-black text-gray-800 dark:text-gray-200 font-body">
+                  {formatMs(lap)}
+                </span>
+              </div>
             ))}
-          </VStack>
-        </Box>
+          </div>
+        </div>
       )}
-    </VStack>
+    </div>
   );
 }

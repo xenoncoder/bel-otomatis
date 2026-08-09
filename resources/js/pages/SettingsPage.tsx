@@ -1,422 +1,273 @@
-import { useRef, useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSettings } from "@/hooks/useSettings";
-import { toaster } from "@/lib/toaster";
 import { api } from "@/lib/api";
 import { useT } from "@/lib/i18n";
-import {
-  Box, Button, Grid, Checkbox, Dialog, Field, HStack, Flex, Heading, Input, Text, VStack, MenuRoot, MenuTrigger, MenuContent, MenuItem,
-} from "@chakra-ui/react";
-import { FiX, FiDownload, FiUpload, FiSave, FiAlertTriangle, FiChevronDown, FiSettings } from "react-icons/fi";
-import CloseButton from "@/components/CloseButton";
-import BackgroundOrnament from "@/components/BackgroundOrnament";
+import { useToast } from "@/components/ui/ToastProvider";
+import { FiSave, FiDownload, FiUpload, FiX, FiAlertTriangle, FiSettings } from "react-icons/fi";
+import { GlassCard, GlassButton, GlassInput, GlassSelect, GlassLabel } from "@/components/ui/GlassComponents";
+import { GlassModal } from "@/components/ui/GlassModal";
+
+const TIMEZONES = [
+  "Asia/Jakarta", "Asia/Makassar", "Asia/Jayapura", "UTC"
+];
 
 export default function SettingsPage() {
-  const t = useT();
-  const { settings, loading, update } = useSettings();
-  const [form, setForm] = useState<Record<string, string>>({});
+  const { settings: current, update: updateConfig } = useSettings();
+  const [formData, setFormData] = useState(current);
   const [saving, setSaving] = useState(false);
-  const [overwrite, setOverwrite] = useState(false);
-  const [importing, setImporting] = useState(false);
-  const [exporting, setExporting] = useState(false);
-
+  
   const [exportOpen, setExportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  
   const [importOpen, setImportOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [overwrite, setOverwrite] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const t = useT();
+  const { toast } = useToast();
 
-  const current = { ...settings, ...form };
-  const set = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
+  useEffect(() => { setFormData(current); }, [current]);
+
+  const handleChange = (field: keyof typeof current, value: any) => {
+    setFormData((prev: any) => ({ ...prev, [field]: value }));
+  };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await update(form);
-      setForm({});
-      toaster.create({ title: t("settings.saved"), type: "success" });
+      await updateConfig(formData);
+      toast({ title: t("settings.saveSuccess"), type: "success" });
     } catch (e) {
-      toaster.create({ title: (e as Error).message, type: "error" });
-    } finally {
-      setSaving(false);
-    }
+      toast({ title: t("settings.saveFailed"), description: (e as Error).message, type: "error" });
+    } finally { setSaving(false); }
   };
 
   const confirmExport = async () => {
-    setExportOpen(false);
     setExporting(true);
     try {
       await api.backup.export();
-      toaster.create({ title: t("settings.backupDownloaded"), type: "success" });
+      setExportOpen(false);
+      toast({ title: t("settings.exportSuccess"), type: "success" });
     } catch (e) {
-      toaster.create({ title: (e as Error).message, type: "error" });
-    } finally {
-      setExporting(false);
-    }
+      toast({ title: t("settings.exportFailed"), description: (e as Error).message, type: "error" });
+    } finally { setExporting(false); }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    setPendingFile(file);
-    setImportOpen(true);
+    if (file) {
+      setPendingFile(file);
+      setImportOpen(true);
+    }
     e.target.value = "";
+  };
+
+  const cancelImport = () => {
+    setPendingFile(null);
+    setImportOpen(false);
   };
 
   const confirmImport = async () => {
     if (!pendingFile) return;
-    setImportOpen(false);
     setImporting(true);
     try {
-      const res = await api.backup.import(pendingFile, overwrite);
-      toaster.create({
-        title: res.message,
-        description: t("settings.importedDesc", { settings: res.imported.settings, sounds: res.imported.bell_sounds, schedules: res.imported.schedules }),
-        type: "success",
-      });
-      setPendingFile(null);
+      await api.backup.import(pendingFile, overwrite);
+      toast({ title: t("settings.importSuccess"), description: t("settings.importSuccessDesc"), type: "success" });
       setTimeout(() => window.location.reload(), 1500);
     } catch (e) {
-      toaster.create({ title: (e as Error).message, type: "error" });
+      toast({ title: t("settings.importFailed"), description: (e as Error).message, type: "error" });
     } finally {
       setImporting(false);
+      setImportOpen(false);
+      setPendingFile(null);
     }
   };
 
-  const cancelImport = () => {
-    setImportOpen(false);
-    setPendingFile(null);
-  };
-
-  if (loading) return <Heading size="md">{t("settings.loading")}</Heading>;
-
   return (
-    <Box position="relative" minH="80vh">
-      <BackgroundOrnament variant="normal" />
-      <VStack gap={8} align="stretch" position="relative" zIndex={1} maxW="800px" mx="auto" pt={{ base: 4, md: 8 }}>
-        <Box textAlign="center" mb={4}>
-          <Heading size={{ base: "2xl", md: "4xl" }} fontFamily="'Righteous', cursive" fontWeight="normal" color="var(--sw-purple-normal)" textShadow="3px 3px 0 var(--sw-shadow-color)" letterSpacing="wider">
-            {t("settings.title")}
-          </Heading>
-          <Text fontFamily="'IBM Plex Mono', monospace" color="var(--sw-fg-muted)" mt={2}>Konfigurasi preferensi sistem dan cadangan data.</Text>
-        </Box>
+    <div className="relative max-w-5xl mx-auto flex flex-col gap-8">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl shadow-purple-500/20">
+            <FiSettings size={28} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl md:text-4xl font-heading font-black text-gray-800 dark:text-gray-100">
+              {t("settings.title")}
+            </h1>
+            <p className="text-sm font-body text-gray-600 dark:text-gray-400 mt-1">
+              Sesuaikan preferensi sistem, zona waktu, dan cadangkan data Anda.
+            </p>
+          </div>
+        </div>
+      </div>
 
-        <VStack gap={8} align="stretch">
-          {/* Card: Konfigurasi Sistem */}
-          <Box className="sw-card" borderRadius="var(--sw-radius)" overflow="hidden" position="relative">
-            <Box position="absolute" top={0} left={0} w="8px" h="full" bg="var(--sw-green-normal)" />
-            <Box p={{ base: 5, md: 8 }} pl={{ base: 7, md: 10 }}>
-              <HStack gap={3} mb={6}>
-                <Box p={2} bg="var(--sw-green-light)" borderRadius="md" border="2px solid var(--sw-green-dark)">
-                  <FiSettings size={20} color="var(--sw-green-dark)" />
-                </Box>
-                <Heading size="md" fontFamily="'Comfortaa', sans-serif" fontWeight="800" color="var(--sw-fg)">{t("settings.configSystem")}</Heading>
-              </HStack>
+      <div className="flex flex-col gap-8 relative z-10">
+        
+        {/* System Configuration */}
+        <GlassCard className="relative overflow-hidden !p-0">
+          <div className="absolute top-0 left-0 w-2 h-full bg-emerald-500" />
+          <div className="p-6 md:p-10 pl-8 md:pl-12">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-emerald-500/20 rounded-xl border border-emerald-500/30">
+                <FiSettings size={20} className="text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <h2 className="text-xl font-heading font-bold text-gray-800 dark:text-gray-100">
+                {t("settings.systemConfig")}
+              </h2>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="flex flex-col gap-2">
+                <GlassLabel>{t("settings.timezone")}</GlassLabel>
+                <GlassSelect 
+                  value={formData.timezone} 
+                  onChange={(e: any) => handleChange("timezone", e.target.value)}
+                >
+                  {TIMEZONES.map(tz => <option key={tz} value={tz} className="bg-gray-800 text-white">{tz}</option>)}
+                </GlassSelect>
+              </div>
+              
+              <div className="flex flex-col gap-2">
+                <GlassLabel>{t("settings.timeFormat")}</GlassLabel>
+                <div className="flex gap-2">
+                  {["24", "12"].map((fmt) => (
+                    <button
+                      key={fmt}
+                      type="button"
+                      onClick={() => handleChange("time_format", fmt)}
+                      className={`flex-1 py-3 px-4 rounded-xl font-bold transition-all border ${
+                        formData.time_format === fmt 
+                          ? "bg-emerald-500/80 text-white border-emerald-400 shadow-lg shadow-emerald-500/30"
+                          : "bg-black/10 dark:bg-white/5 border-white/10 text-gray-700 dark:text-gray-300 hover:bg-black/20 dark:hover:bg-white/10"
+                      }`}
+                    >
+                      {fmt} Jam
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-8 pt-6 border-t border-white/10 flex justify-end">
+              <GlassButton variant="success" onClick={handleSave} disabled={saving} className="px-8">
+                <FiSave /> {t("settings.saveSettings")}
+              </GlassButton>
+            </div>
+          </div>
+        </GlassCard>
 
-              <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={6}>
-                <Field.Root>
-                  <Field.Label fontFamily="'Comfortaa', sans-serif" fontWeight="700">{t("settings.volume")}</Field.Label>
-                  <Input
-                    type="number"
-                    size="lg"
-                    border="2px solid var(--sw-border-color)"
-                    borderRadius="var(--sw-radius)"
-                    bg="var(--sw-bg-panel)"
-                    value={current.volume ?? ""}
-                    onChange={(e) => set("volume", e.target.value)}
-                    _focus={{ borderColor: "var(--sw-green-normal)", boxShadow: "0.2rem 0.2rem 0 var(--sw-shadow-color)", transform: "translate(-1px, -1px)" }}
-                    transition="all 0.2s"
+        {/* Backup & Restore */}
+        <GlassCard className="relative overflow-hidden !p-0">
+          <div className="absolute top-0 left-0 w-2 h-full bg-blue-500" />
+          <div className="p-6 md:p-10 pl-8 md:pl-12">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-blue-500/20 rounded-xl border border-blue-500/30">
+                <FiDownload size={20} className="text-blue-600 dark:text-blue-400" />
+              </div>
+              <h2 className="text-xl font-heading font-bold text-gray-800 dark:text-gray-100">
+                {t("settings.backupRestore")}
+              </h2>
+            </div>
+            <p className="text-sm font-body text-gray-600 dark:text-gray-400 mb-8">
+              {t("settings.backupDesc")}
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex flex-col gap-4 p-6 bg-black/5 dark:bg-white/5 border border-white/10 rounded-2xl">
+                <h3 className="font-heading font-bold text-lg text-gray-800 dark:text-gray-100">Backup Data</h3>
+                <p className="text-xs text-gray-500 flex-1">
+                  Unduh semua pengaturan, jadwal, dan file audio Anda ke dalam file zip untuk keamanan.
+                </p>
+                <GlassButton variant="primary" onClick={() => setExportOpen(true)} disabled={exporting}>
+                  <FiDownload /> {t("settings.downloadBackup")}
+                </GlassButton>
+              </div>
+
+              <div className="flex flex-col gap-4 p-6 bg-black/5 dark:bg-white/5 border border-white/10 rounded-2xl">
+                <h3 className="font-heading font-bold text-lg text-gray-800 dark:text-gray-100">Restore Data</h3>
+                <p className="text-xs text-gray-500 flex-1">
+                  Kembalikan sistem Anda menggunakan file backup (.zip atau .json) yang sebelumnya telah diunduh.
+                </p>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={overwrite} 
+                    onChange={(e) => setOverwrite(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                  <Text fontSize="xs" color="var(--sw-fg-subtle)" mt={1}>0-100</Text>
-                </Field.Root>
+                  <span className={`text-xs font-bold ${overwrite ? "text-rose-500" : "text-gray-500"}`}>
+                    {t("settings.overwriteLabel")}
+                  </span>
+                </label>
+                <GlassButton variant="warning" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+                  <FiUpload /> {t("settings.restoreFromFile")}
+                </GlassButton>
+                <input ref={fileInputRef} type="file" accept=".zip,.json,application/zip,application/json" hidden onChange={handleFileSelect} />
+              </div>
+            </div>
+          </div>
+        </GlassCard>
 
-                <Field.Root>
-                  <Field.Label fontFamily="'Comfortaa', sans-serif" fontWeight="700">{t("settings.timezone")}</Field.Label>
-                  {(() => {
-                    const timezoneGroups = [
-                      { label: t("tz.indonesia"), options: [
-                        { value: "Asia/Jakarta", label: "WIB - Jakarta (UTC+7)" },
-                        { value: "Asia/Makassar", label: "WITA - Makassar (UTC+8)" },
-                        { value: "Asia/Jayapura", label: "WIT - Jayapura (UTC+9)" },
-                        { value: "Asia/Pontianak", label: "WIB - Pontianak (UTC+7)" },
-                      ] },
-                      { label: t("tz.asia"), options: [
-                        { value: "Asia/Singapore", label: "Singapore (UTC+8)" },
-                        { value: "Asia/Kuala_Lumpur", label: "Kuala Lumpur (UTC+8)" },
-                        { value: "Asia/Bangkok", label: "Bangkok (UTC+7)" },
-                        { value: "Asia/Tokyo", label: "Tokyo (UTC+9)" },
-                      ] },
-                      { label: t("tz.eropa"), options: [
-                        { value: "Europe/London", label: "London (UTC+0)" },
-                      ] },
-                      { label: t("tz.amerika"), options: [
-                        { value: "America/New_York", label: "New York (UTC-5)" },
-                      ] },
-                    ];
-                    const selectedTz = current.timezone ?? "Asia/Jakarta";
-                    const selectedLabel = timezoneGroups.flatMap(g => g.options).find(o => o.value === selectedTz)?.label || selectedTz;
+      </div>
 
-                    return (
-                      <Box position="relative" w="full">
-                        <MenuRoot>
-                          <MenuTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              w="full" 
-                              size="lg"
-                              justifyContent="space-between" 
-                              fontFamily="'IBM Plex Mono', monospace"
-                              fontWeight="bold"
-                              bg="var(--sw-bg-panel)"
-                              borderRadius="var(--sw-radius)"
-                              border="2px solid var(--sw-border-color)"
-                              color="var(--sw-fg)"
-                              textAlign="left"
-                              px={4}
-                              _hover={{ borderColor: "var(--sw-green-normal)", transform: "translate(-1px, -1px)", boxShadow: "0.2rem 0.2rem 0 var(--sw-shadow-color)" }}
-                              transition="all 0.2s"
-                            >
-                              {selectedLabel}
-                              <FiChevronDown />
-                            </Button>
-                          </MenuTrigger>
-                          <MenuContent 
-                            position="absolute"
-                            top="calc(100% + 4px)"
-                            left="0"
-                            w="full"
-                            maxH="250px" 
-                            overflowY="auto" 
-                            bg="var(--sw-bg-card)" 
-                            border="2px solid var(--sw-border-color)" 
-                            boxShadow="0.3rem 0.3rem 0 var(--sw-shadow-color)" 
-                            borderRadius="var(--sw-radius)"
-                            p={2}
-                            zIndex="popover"
-                          >
-                            {timezoneGroups.map(group => (
-                              <Box key={group.label} mb={2}>
-                                <Text fontSize="xs" fontWeight="bold" color="var(--sw-fg-muted)" px={2} py={1}>{group.label}</Text>
-                                {group.options.map(opt => (
-                                  <MenuItem 
-                                    key={opt.value} 
-                                    value={opt.value} 
-                                    onClick={() => set("timezone", opt.value)}
-                                    cursor="pointer"
-                                    _hover={{ bg: "var(--sw-purple-normal)", color: "#fff" }}
-                                    borderRadius="md"
-                                    px={3} py={2}
-                                    fontFamily="'IBM Plex Mono', monospace"
-                                    fontSize="sm"
-                                  >
-                                    {opt.label}
-                                  </MenuItem>
-                                ))}
-                              </Box>
-                            ))}
-                          </MenuContent>
-                        </MenuRoot>
-                      </Box>
-                    );
-                  })()}
-                </Field.Root>
+      <GlassModal 
+        isOpen={exportOpen} 
+        onClose={() => setExportOpen(false)}
+        title={t("settings.backupConfirmTitle")}
+        footer={
+          <>
+            <GlassButton variant="ghost" onClick={() => setExportOpen(false)}><FiX /></GlassButton>
+            <GlassButton variant="success" onClick={confirmExport}><FiDownload /> {t("settings.yesDownload")}</GlassButton>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <p className="font-bold text-sm text-gray-800 dark:text-gray-200">{t("settings.backupConfirmBody")}</p>
+          <div className="p-4 bg-black/5 dark:bg-white/5 border border-white/10 rounded-xl">
+            <ul className="list-disc pl-5 text-sm font-bold text-gray-700 dark:text-gray-300 flex flex-col gap-2">
+              <li>{t("settings.backupItem1")}</li>
+              <li>{t("settings.backupItem2")}</li>
+              <li>{t("settings.backupItem3")}</li>
+              <li>{t("settings.backupItem4")}</li>
+            </ul>
+          </div>
+          <p className="font-bold text-sm text-gray-800 dark:text-gray-200">{t("settings.backupConfirmQ")}</p>
+        </div>
+      </GlassModal>
 
-                <Field.Root>
-                  <Field.Label fontFamily="'Comfortaa', sans-serif" fontWeight="700">{t("settings.bellDuration")}</Field.Label>
-                  <Input
-                    type="number"
-                    size="lg"
-                    border="2px solid var(--sw-border-color)"
-                    borderRadius="var(--sw-radius)"
-                    bg="var(--sw-bg-panel)"
-                    value={current.bell_duration ?? ""}
-                    onChange={(e) => set("bell_duration", e.target.value)}
-                    _focus={{ borderColor: "var(--sw-green-normal)", boxShadow: "0.2rem 0.2rem 0 var(--sw-shadow-color)", transform: "translate(-1px, -1px)" }}
-                    transition="all 0.2s"
-                  />
-                  <Text fontSize="xs" color="var(--sw-fg-subtle)" mt={1}>Detik</Text>
-                </Field.Root>
-
-                <Field.Root>
-                  <Field.Label fontFamily="'Comfortaa', sans-serif" fontWeight="700">{t("settings.timeFormat")}</Field.Label>
-                  <HStack gap={2} w="full">
-                    {["24", "12"].map((fmt) => {
-                      const isActive = (current.time_format ?? "24") === fmt;
-                      return (
-                        <button
-                          key={fmt}
-                          type="button"
-                          onClick={() => set("time_format", fmt)}
-                          style={{
-                            fontFamily: "'IBM Plex Mono', monospace",
-                            fontWeight: 700,
-                            fontSize: "1rem",
-                            padding: "0.6rem 1rem",
-                            borderRadius: "var(--sw-radius)",
-                            border: "2px solid var(--sw-border-color)",
-                            background: isActive ? "var(--sw-green-normal)" : "var(--sw-bg-panel)",
-                            color: isActive ? "#ffffff" : "var(--sw-fg)",
-                            boxShadow: isActive ? "0.2rem 0.2rem 0 var(--sw-shadow-color)" : "none",
-                            cursor: "pointer",
-                            transition: "all 0.15s",
-                            flex: 1,
-                            textAlign: "center",
-                            transform: isActive ? "translate(-2px, -2px)" : "none"
-                          }}
-                        >
-                          {fmt === "24" ? t("settings.timeFormat24") : t("settings.timeFormat12")}
-                        </button>
-                      );
-                    })}
-                  </HStack>
-                </Field.Root>
-              </Grid>
-
-              <Flex mt={8} justifyContent="flex-end">
-                <Button className="sw-btn sw-btn-success" size="lg" px={8} onClick={handleSave} loading={saving}>
-                  <Box as={FiSave} mr={2} /> {t("settings.save")}
-                </Button>
-              </Flex>
-            </Box>
-          </Box>
-
-          {/* Card: Backup & Restore */}
-          <Box className="sw-card" borderRadius="var(--sw-radius)" overflow="hidden" position="relative">
-            <Box position="absolute" top={0} left={0} w="8px" h="full" bg="var(--sw-blue-normal)" />
-            <Box p={{ base: 5, md: 8 }} pl={{ base: 7, md: 10 }}>
-              <HStack gap={3} mb={4}>
-                <Box p={2} bg="var(--sw-blue-light)" borderRadius="md" border="2px solid var(--sw-blue-dark)">
-                  <FiDownload size={20} color="var(--sw-blue-dark)" />
-                </Box>
-                <Heading size="md" fontFamily="'Comfortaa', sans-serif" fontWeight="800" color="var(--sw-fg)">{t("settings.backupRestore")}</Heading>
-              </HStack>
-              <Text fontSize="sm" color="var(--sw-fg-muted)" mb={6} fontFamily="'IBM Plex Mono', monospace">
-                {t("settings.backupDesc")}
-              </Text>
-
-              <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={6}>
-                <Box p={5} borderRadius="var(--sw-radius)" bg="var(--sw-bg-muted)" border="2px solid var(--sw-border-color)" display="flex" flexDirection="column" gap={4}>
-                  <Heading size="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="700">Backup Data</Heading>
-                  <Text fontSize="xs" color="var(--sw-fg-subtle)" flex={1}>
-                    Unduh semua pengaturan, jadwal, dan file audio Anda ke dalam file zip untuk keamanan.
-                  </Text>
-                  <Button className="sw-btn sw-btn-primary" onClick={() => setExportOpen(true)} loading={exporting} w="full">
-                    <Box as={FiDownload} mr={2} /> {t("settings.downloadBackup")}
-                  </Button>
-                </Box>
-
-                <Box p={5} borderRadius="var(--sw-radius)" bg="var(--sw-bg-muted)" border="2px solid var(--sw-border-color)" display="flex" flexDirection="column" gap={4}>
-                  <Heading size="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="700">Restore Data</Heading>
-                  <Text fontSize="xs" color="var(--sw-fg-subtle)" flex={1}>
-                    Kembalikan sistem Anda menggunakan file backup (.zip atau .json) yang sebelumnya telah diunduh.
-                  </Text>
-                  <Checkbox.Root checked={overwrite} onCheckedChange={(e) => setOverwrite(e.checked === true)} mb={1}>
-                    <Checkbox.HiddenInput />
-                    <Checkbox.Control />
-                    <Checkbox.Label fontSize="xs" fontWeight="bold" color={overwrite ? "var(--sw-pink-normal)" : "var(--sw-fg-muted)"}>
-                      {t("settings.overwriteLabel")}
-                    </Checkbox.Label>
-                  </Checkbox.Root>
-                  <Button className="sw-btn sw-btn-warning" loading={importing} onClick={() => fileInputRef.current?.click()} w="full">
-                    <Box as={FiUpload} mr={2} /> {t("settings.restoreFromFile")}
-                  </Button>
-                  <input ref={fileInputRef} type="file" accept=".zip,.json,application/zip,application/json" hidden onChange={handleFileSelect} />
-                </Box>
-              </Grid>
-            </Box>
-          </Box>
-        </VStack>
-      </VStack>
-
-      {/* Dialog: Export confirmation */}
-      <Dialog.Root open={exportOpen} onOpenChange={(e) => setExportOpen(e.open)} placement="center">
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
-          <Dialog.Content maxW={{ base: "calc(100vw - 2rem)", sm: "440px" }}>
-            <Box className="sw-dialog-strip sw-dialog-strip-green" />
-            <Dialog.Header>
-              <Dialog.Title>{t("settings.backupConfirmTitle")}</Dialog.Title>
-              <Dialog.CloseTrigger asChild>
-                <CloseButton />
-              </Dialog.CloseTrigger>
-            </Dialog.Header>
-            <Dialog.Body>
-              <VStack gap={3} align="stretch">
-                <Text fontSize="sm" color="var(--sw-fg)" fontWeight="600">{t("settings.backupConfirmBody")}</Text>
-                <Box p={3} borderRadius="var(--sw-radius)" bg="var(--sw-bg-muted)" border="2px solid var(--sw-border-color)">
-                  <VStack gap={1} align="stretch" fontSize="sm" color="var(--sw-fg)" fontWeight="600">
-                    <Text>{t("settings.backupItem1")}</Text>
-                    <Text>{t("settings.backupItem2")}</Text>
-                    <Text>{t("settings.backupItem3")}</Text>
-                    <Text>{t("settings.backupItem4")}</Text>
-                  </VStack>
-                </Box>
-                <Text fontSize="sm" color="var(--sw-fg)" fontWeight="600">{t("settings.backupConfirmQ")}</Text>
-              </VStack>
-            </Dialog.Body>
-            <Dialog.Footer>
-              <Button className="sw-btn" variant="ghost" size="sm" onClick={() => setExportOpen(false)} title={t("common.cancel")}>
-                <Box as={FiX} />
-              </Button>
-              <Button className="sw-btn sw-btn-success" size="sm" onClick={confirmExport}>
-                <Box as={FiDownload} /> {t("settings.yesDownload")}
-              </Button>
-            </Dialog.Footer>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Dialog.Root>
-
-      {/* Dialog: Import confirmation */}
-      <Dialog.Root open={importOpen} onOpenChange={(e) => { if (!e.open) cancelImport(); }} placement="center">
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
-          <Dialog.Content maxW={{ base: "calc(100vw - 2rem)", sm: "480px" }}>
-            <Box className={overwrite ? "sw-dialog-strip sw-dialog-strip-red" : "sw-dialog-strip sw-dialog-strip-yellow"} />
-            <Dialog.Header>
-              <Dialog.Title>
-                {overwrite ? t("settings.restoreConfirmOverwrite") : t("settings.restoreConfirm")}
-              </Dialog.Title>
-              <Dialog.CloseTrigger asChild>
-                <CloseButton />
-              </Dialog.CloseTrigger>
-            </Dialog.Header>
-            <Dialog.Body>
-              <VStack gap={3} align="stretch">
-                <Text fontSize="sm" color="var(--sw-fg)" fontWeight="600">{t("settings.restoreFile")}</Text>
-                <Box p={3} borderRadius="var(--sw-radius)" bg="var(--sw-bg-muted)" border="2px solid var(--sw-border-color)">
-                  <Text fontSize="sm" fontFamily="'IBM Plex Mono', monospace" fontWeight="600" color="var(--sw-fg)" wordBreak="break-all">
-                    {pendingFile?.name}
-                  </Text>
-                  <Text fontSize="xs" color="var(--sw-fg-subtle)" mt={1}>
-                    {t("settings.fileSize", { size: pendingFile ? (pendingFile.size / 1024).toFixed(1) : 0 })}
-                  </Text>
-                </Box>
-                {overwrite ? (
-                  <Box p={3} borderRadius="var(--sw-radius)" bg="var(--sw-pink-light)" border="2px solid var(--sw-pink-dark)">
-                    <HStack gap={2} align="start">
-                      <Box as={FiAlertTriangle} color="var(--sw-pink-dark)" flexShrink={0} mt="2px" />
-                      <Text fontSize="sm" color="var(--sw-pink-dark)" fontWeight="700">
-                        {t("settings.restoreOverwriteWarning")}
-                      </Text>
-                    </HStack>
-                  </Box>
-                ) : (
-                  <Text fontSize="sm" color="var(--sw-fg-muted)">
-                    {t("settings.restoreNormalInfo")}
-                  </Text>
-                )}
-                <Text fontSize="sm" color="var(--sw-fg)" fontWeight="700">{t("settings.restoreConfirmQ")}</Text>
-              </VStack>
-            </Dialog.Body>
-            <Dialog.Footer>
-              <Button className="sw-btn" variant="ghost" size="sm" onClick={cancelImport} title={t("common.cancel")}>
-                <Box as={FiX} />
-              </Button>
-              <Button colorPalette={overwrite ? "red" : "yellow"} size="sm" onClick={confirmImport}>
-                <Box as={FiUpload} /> {overwrite ? t("settings.yesOverwrite") : t("settings.yesRestore")}
-              </Button>
-            </Dialog.Footer>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Dialog.Root>
-    </Box>
+      <GlassModal 
+        isOpen={importOpen} 
+        onClose={cancelImport}
+        title={overwrite ? t("settings.restoreConfirmOverwrite") : t("settings.restoreConfirm")}
+        footer={
+          <>
+            <GlassButton variant="ghost" onClick={cancelImport}><FiX /></GlassButton>
+            <GlassButton variant={overwrite ? "danger" : "warning"} onClick={confirmImport}>
+              <FiUpload /> {overwrite ? t("settings.yesOverwrite") : t("settings.yesRestore")}
+            </GlassButton>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <p className="font-bold text-sm text-gray-800 dark:text-gray-200">{t("settings.restoreFile")}</p>
+          <div className="p-4 bg-black/5 dark:bg-white/5 border border-white/10 rounded-xl">
+            <p className="font-body font-bold text-sm text-gray-800 dark:text-gray-200 break-all">{pendingFile?.name}</p>
+            <p className="text-xs text-gray-500 mt-1">{t("settings.fileSize", { size: pendingFile ? (pendingFile.size / 1024).toFixed(1) : 0 })}</p>
+          </div>
+          {overwrite ? (
+            <div className="p-4 bg-rose-500/20 border border-rose-500/30 rounded-xl flex items-start gap-3">
+              <FiAlertTriangle className="text-rose-600 dark:text-rose-400 mt-0.5 shrink-0" size={18} />
+              <p className="font-bold text-sm text-rose-700 dark:text-rose-300">{t("settings.restoreOverwriteWarning")}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-600 dark:text-gray-400">{t("settings.restoreNormalInfo")}</p>
+          )}
+          <p className="font-bold text-sm text-gray-800 dark:text-gray-200">{t("settings.restoreConfirmQ")}</p>
+        </div>
+      </GlassModal>
+    </div>
   );
 }

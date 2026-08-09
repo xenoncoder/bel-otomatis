@@ -5,7 +5,6 @@ import { useT, useLang } from "@/lib/i18n";
 import { useTimeFormat, formatTimeString } from "@/lib/time-format";
 import { useBellPolling } from "@/hooks/useBellPolling";
 import BackgroundOrnament from "@/components/BackgroundOrnament";
-import { Box, Text, VStack, HStack } from "@chakra-ui/react";
 
 const TZ = "Asia/Jakarta";
 
@@ -105,251 +104,97 @@ export default function FullscreenDisplay({ onExit }: FullscreenDisplayProps) {
   const isRinging = shouldRing && !!currentSchedule;
 
   return createPortal(
-    <Box
-      position="fixed"
-      top={0} left={0}
-      w="100%" h="100%"
-      color={isRinging ? "var(--sw-fg)" : "var(--sw-fg)"}
-      zIndex={99999}
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
+    <div
       onClick={handleExit}
-      cursor="pointer"
-      overflow="hidden"
-      transition="background 0.3s"
-      style={{
-        scrollbarWidth: "none",
-        msOverflowStyle: "none",
-        background: "radial-gradient(ellipse at 50% 40%, var(--sw-bg-card) 0%, var(--sw-bg-muted) 100%)",
-      }}
-      className="sw-no-scrollbar"
+      className={`fixed inset-0 z-[99999] flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all duration-300 ${isRinging ? "bg-black/95 text-white" : "bg-gradient-to-br from-indigo-900 via-purple-900 to-black text-white"}`}
     >
       <BackgroundOrnament variant="normal" />
 
       {/* Top bar — exit hint + button */}
-      <Box
-        position="absolute"
-        top={0} left={0} right={0}
-        display="flex"
-        alignItems="center"
-        justifyContent="space-between"
-        px={{ base: 4, md: 8 }}
-        py={{ base: 4, md: 5 }}
-        zIndex={2}
-        pointerEvents="none"
-      >
-        <HStack gap={2} opacity={0.5}>
-          <Text
-            fontSize="sm"
-            fontFamily="'IBM Plex Mono', monospace"
-            color="var(--sw-fg-subtle)"
-          >
+      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 md:px-8 py-4 md:py-5 z-20 pointer-events-none">
+        <div className="flex items-center gap-2 opacity-50">
+          <p className="text-sm font-body text-gray-300">
             {t("fullscreen.clickToExit")}
-          </Text>
-        </HStack>
-        <Box
-          w={{ base: 10, md: 12 }}
-          h={{ base: 10, md: 12 }}
-          borderRadius="var(--sw-radius)"
-          border="2px solid var(--sw-border-color)"
-          bg="var(--sw-bg-card)"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          boxShadow="0.2rem 0.2rem 0 var(--sw-shadow-color)"
-          _hover={{ transform: "translate(-0.05rem, -0.05rem)", boxShadow: "0.25rem 0.25rem 0 var(--sw-shadow-color)" }}
-          transition="all 0.15s"
-          color="var(--sw-fg)"
-          pointerEvents="auto"
-        >
+          </p>
+        </div>
+        <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl border border-white/20 bg-black/20 backdrop-blur-md flex items-center justify-center pointer-events-auto hover:bg-white/10 hover:-translate-y-0.5 hover:shadow-lg transition-all text-white shadow-md cursor-pointer">
           <FiX size={24} />
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {isRinging ? (
         /* ============ RINGING STATE ============ */
-        <VStack gap={{ base: 6, md: 10 }} alignItems="center" zIndex={1} onClick={handleExit}>
+        <div className="flex flex-col items-center gap-6 md:gap-10 z-10" onClick={handleExit}>
           {/* Pulsing rings behind bell */}
-          <Box position="relative" display="flex" alignItems="center" justifyContent="center">
-            <Box
-              position="absolute"
-              w={{ base: 180, md: 260 }}
-              h={{ base: 180, md: 260 }}
-              borderRadius="50%"
-              border="3px solid var(--sw-purple-normal)"
-              opacity={0.2}
-              className="sw-pulse"
-            />
-            <Box
-              position="absolute"
-              w={{ base: 140, md: 200 }}
-              h={{ base: 140, md: 200 }}
-              borderRadius="50%"
-              border="3px solid var(--sw-purple-normal)"
-              opacity={0.3}
-              className="sw-pulse"
-              style={{ animationDelay: "0.3s" }}
-            />
+          <div className="relative flex items-center justify-center">
+            <div className="absolute w-[180px] h-[180px] md:w-[260px] md:h-[260px] rounded-full border-4 border-indigo-500 opacity-20 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
+            <div className="absolute w-[140px] h-[140px] md:w-[200px] md:h-[200px] rounded-full border-4 border-indigo-500 opacity-30 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" style={{ animationDelay: "0.3s" }} />
+            
             {/* Bell icon */}
-            <Box
-              className="sw-ring"
-              w={{ base: 100, md: 150 }}
-              h={{ base: 100, md: 150 }}
-              borderRadius="50%"
-              border="4px solid var(--sw-border-color)"
-              bg="var(--sw-purple-normal)"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              flexShrink={0}
-              boxShadow="0.5rem 0.5rem 0 var(--sw-shadow-color)"
-              position="relative"
-              zIndex={1}
-            >
+            <div className="relative z-10 w-[100px] h-[100px] md:w-[150px] md:h-[150px] rounded-full border-[6px] border-white/20 bg-indigo-500 flex items-center justify-center shadow-2xl shadow-indigo-500/50 animate-bounce">
               <FiBell size={75} color="#ffffff" strokeWidth={2.5} />
-            </Box>
-          </Box>
+            </div>
+          </div>
 
           {/* Ringing text */}
-          <Text
-            fontSize={{ base: "4xl", md: "7xl" }}
-            fontFamily="'Comfortaa', sans-serif"
-            fontWeight="800"
-            color="var(--sw-fg-heading)"
-            letterSpacing="0.08em"
-            textTransform="uppercase"
-          >
+          <p className="text-4xl md:text-7xl font-heading font-black text-white tracking-wider uppercase animate-pulse">
             {t("fullscreen.ringing")}
-          </Text>
+          </p>
 
           {/* Label + time */}
           {currentSchedule?.label && (
-            <Box
-              px={{ base: 6, md: 8 }}
-              py={{ base: 2, md: 3 }}
-              borderRadius="var(--sw-radius-lg)"
-              bg="var(--sw-purple-light)"
-              border="2px solid var(--sw-border-color)"
-            >
-              <Text
-                fontSize={{ base: "2xl", md: "4xl" }}
-                fontFamily="'Comfortaa', sans-serif"
-                fontWeight="700"
-                color="var(--sw-fg)"
-              >
+            <div className="px-6 md:px-8 py-2 md:py-3 rounded-2xl bg-indigo-500/20 border-2 border-indigo-500/50 backdrop-blur-md">
+              <p className="text-2xl md:text-4xl font-heading font-bold text-white shadow-sm">
                 {currentSchedule.label}
-              </Text>
-            </Box>
+              </p>
+            </div>
           )}
-          <Text
-            fontSize={{ base: "5xl", md: "8xl" }}
-            fontFamily="'IBM Plex Mono', monospace"
-            fontWeight="700"
-            color="var(--sw-purple-normal)"
-            opacity={0.9}
-            letterSpacing="-0.03em"
-          >
+          <p className="text-5xl md:text-8xl font-body font-black text-indigo-400 opacity-90 tracking-tighter">
             {formatTimeString(currentSchedule?.start_time, timeFormat)}
-          </Text>
-        </VStack>
+          </p>
+        </div>
       ) : (
         /* ============ NORMAL STATE ============ */
         <>
           {/* Clock — centered */}
-          <VStack gap={2} alignItems="center" zIndex={1}>
-            <Text
-              fontSize={{ base: "7xl", sm: "9xl", md: "16xl", lg: "20xl" }}
-              fontWeight="700"
-              fontFamily="'IBM Plex Mono', monospace"
-              letterSpacing="-0.05em"
-              color="var(--sw-purple-normal)"
-              lineHeight={1}
-              textShadow="0.08rem 0.08rem 0 var(--sw-shadow-color)"
-            >
+          <div className="flex flex-col items-center gap-2 z-10 drop-shadow-xl">
+            <p className="text-[7rem] sm:text-[9rem] md:text-[14rem] lg:text-[18rem] font-bold font-body tracking-tighter text-indigo-300 leading-none drop-shadow-2xl">
               {timeStr}
-            </Text>
-            <Text
-              fontSize={{ base: "md", sm: "lg", md: "xl" }}
-              color="var(--sw-fg-muted)"
-              textTransform="capitalize"
-              fontFamily="'IBM Plex Mono', monospace"
-              opacity={0.7}
-            >
+            </p>
+            <p className="text-lg sm:text-xl md:text-2xl text-indigo-200 capitalize font-body opacity-80 tracking-widest font-bold">
               {dateStr}
-            </Text>
-          </VStack>
+            </p>
+          </div>
 
           {/* Countdown — bottom right */}
           {next ? (
-            <Box
-              position="absolute"
-              bottom={{ base: 4, md: 8 }}
-              right={{ base: 4, md: 8 }}
-              zIndex={2}
-              textAlign="right"
-            >
-              <HStack gap={2} alignItems="center" justifyContent="flex-end" mb={1}>
-                <Text
-                  fontSize={{ base: "xs", md: "sm" }}
-                  fontFamily="'IBM Plex Mono', monospace"
-                  color="var(--sw-fg-subtle)"
-                  textTransform="uppercase"
-                  letterSpacing="0.15em"
-                >
+            <div className="absolute bottom-4 md:bottom-8 right-4 md:right-8 z-20 text-right bg-black/20 p-6 rounded-3xl backdrop-blur-md border border-white/10 shadow-2xl">
+              <div className="flex items-center justify-end gap-2 mb-1">
+                <p className="text-xs md:text-sm font-body text-indigo-200 uppercase tracking-widest">
                   {t("fullscreen.nextBellIn")}
-                </Text>
-                <FiClock size={14} color="var(--sw-fg-subtle)" />
-              </HStack>
-              <Text
-                fontSize={{ base: "2xl", md: "4xl", lg: "5xl" }}
-                fontFamily="'IBM Plex Mono', monospace"
-                fontWeight="700"
-                color="var(--sw-fg)"
-                letterSpacing="-0.03em"
-                lineHeight={1}
-              >
+                </p>
+                <FiClock size={14} className="text-indigo-200" />
+              </div>
+              <p className="text-3xl md:text-5xl lg:text-6xl font-body font-black text-white tracking-tighter leading-none my-2 drop-shadow-md">
                 {countdown}
-              </Text>
-              <Text
-                fontSize={{ base: "md", md: "lg" }}
-                fontFamily="'Comfortaa', sans-serif"
-                fontWeight="700"
-                color="var(--sw-purple-normal)"
-                mt={1}
-              >
+              </p>
+              <p className="text-lg md:text-xl font-heading font-bold text-indigo-300 drop-shadow-md">
                 {next.label}
-              </Text>
-              <Text
-                fontSize={{ base: "xs", md: "sm" }}
-                fontFamily="'IBM Plex Mono', monospace"
-                color="var(--sw-fg-muted)"
-              >
+              </p>
+              <p className="text-xs md:text-sm font-body text-indigo-200 opacity-70 mt-1">
                 {t("fullscreen.nextBellAt")} {formatTimeString(next.start_time, timeFormat)} {t("common.wib")}
-              </Text>
-            </Box>
+              </p>
+            </div>
           ) : (
-            <Box
-              position="absolute"
-              bottom={{ base: 4, md: 8 }}
-              right={{ base: 4, md: 8 }}
-              zIndex={2}
-              textAlign="right"
-            >
-              <Text
-                fontSize={{ base: "lg", md: "xl" }}
-                fontFamily="'Comfortaa', sans-serif"
-                fontWeight="600"
-                color="var(--sw-fg-subtle)"
-              >
+            <div className="absolute bottom-4 md:bottom-8 right-4 md:right-8 z-20 text-right bg-black/20 p-6 rounded-3xl backdrop-blur-md border border-white/10 shadow-2xl">
+              <p className="text-lg md:text-xl font-heading font-bold text-gray-400">
                 {t("fullscreen.noMoreBells")}
-              </Text>
-            </Box>
+              </p>
+            </div>
           )}
         </>
       )}
-    </Box>,
+    </div>,
     document.body,
   );
 }

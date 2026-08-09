@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Box, Heading, HStack, Text, VStack } from "@chakra-ui/react";
 import { FiClock, FiBell, FiChevronRight } from "react-icons/fi";
 import type { Schedule } from "@/lib/types";
 import { useT } from "@/lib/i18n";
@@ -54,147 +53,88 @@ export default function CountdownTimer({ schedules }: CountdownTimerProps) {
   const pad = (n: number) => String(n).padStart(2, "0");
 
   return (
-    <Box className="sw-card" borderRadius="var(--sw-radius)">
-      <Box className="sw-card-header">
-        <HStack gap={2} align="center">
-          <FiClock size={14} color="#ffffff" />
-          <Heading size="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="800">{t("countdown.title")}</Heading>
-        </HStack>
-      </Box>
-      <Box className="sw-card-body" p={{ base: 4, md: 5 }}>
+    <div className="glass-panel overflow-hidden !p-0 flex flex-col">
+      <div className="bg-gradient-to-r from-purple-500 to-indigo-600 p-4 border-b border-white/10 flex items-center gap-2">
+        <FiClock size={16} className="text-white" />
+        <h2 className="font-heading font-bold text-lg text-white">{t("countdown.title")}</h2>
+      </div>
+      <div className="p-4 md:p-6 bg-black/5 dark:bg-white/5 flex-1">
         {next && countdown ? (
-          <VStack gap={4} align="stretch">
+          <div className="flex flex-col gap-6">
             {/* Label + time */}
-            <HStack gap={2} align="center" wrap="wrap">
-              <Box
-                w={9} h={9}
-                borderRadius="var(--sw-radius)"
-                bg="var(--sw-purple-normal)"
-                border="1px solid var(--sw-border-color)"
-                display="flex" alignItems="center" justifyContent="center"
-                flexShrink={0}
-                boxShadow="0.15rem 0.15rem 0 var(--sw-shadow-color)"
-              >
-                <FiBell size={15} color="#ffffff" />
-              </Box>
-              <VStack gap={0} align="start" flex={1} minW={0}>
-                <Text fontSize="sm" fontWeight="700" fontFamily="'Comfortaa', sans-serif" lineClamp={1}>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center shrink-0 shadow-lg shadow-purple-500/20">
+                <FiBell size={20} className="text-purple-600 dark:text-purple-400" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <p className="text-base font-bold font-heading text-gray-800 dark:text-gray-100 truncate">
                   {next.label}
-                </Text>
-                <Text fontSize="xs" color="var(--sw-fg-muted)" fontFamily="'IBM Plex Mono', monospace">
+                </p>
+                <p className="text-xs text-gray-500 font-body font-bold mt-0.5">
                   {t("countdown.at", { time: formatTimeString(next.start_time, timeFormat) })}
-                </Text>
-              </VStack>
-            </HStack>
+                </p>
+              </div>
+            </div>
 
             {/* Countdown — split boxes */}
-            <HStack gap={2} justify="center" align="stretch">
+            <div className="flex justify-center items-center gap-3">
               {[
                 { val: countdown.h, label: t("timer.hours") },
                 { val: countdown.m, label: t("timer.minutes") },
                 { val: countdown.s, label: t("timer.seconds") },
               ].map((unit, i) => (
-                <HStack key={i} gap={2} align="stretch">
+                <div key={i} className="flex items-center gap-3">
                   {i > 0 && (
-                    <Text alignSelf="center" fontSize="2xl" fontWeight="700" color="var(--sw-fg-subtle)" fontFamily="'IBM Plex Mono', monospace">:</Text>
+                    <p className="text-3xl font-black text-gray-400 dark:text-gray-600 font-body">:</p>
                   )}
-                  <Box
-                    flex={1}
-                    minW="60px"
-                    borderRadius="var(--sw-radius)"
-                    bg="var(--sw-bg-panel)"
-                    border="1px solid var(--sw-border-color)"
-                    boxShadow="0.2rem 0.2rem 0 var(--sw-shadow-color)"
-                    textAlign="center"
-                    py={2}
-                  >
-                    <Text
-                      fontSize={{ base: "2xl", md: "3xl" }}
-                      fontFamily="'IBM Plex Mono', monospace"
-                      fontWeight="700"
-                      color="var(--sw-purple-normal)"
-                      lineHeight={1}
-                      letterSpacing="-0.03em"
-                    >
+                  <div className="flex flex-col items-center bg-white/50 dark:bg-black/30 border border-white/20 dark:border-white/10 rounded-2xl w-16 md:w-20 py-3 shadow-inner">
+                    <p className="text-3xl md:text-4xl font-black text-purple-600 dark:text-purple-400 font-body tracking-tighter leading-none">
                       {pad(unit.val)}
-                    </Text>
-                    <Text
-                      fontSize="2xs"
-                      fontFamily="'IBM Plex Mono', monospace"
-                      color="var(--sw-fg-subtle)"
-                      textTransform="uppercase"
-                      letterSpacing="0.05em"
-                      mt={1}
-                    >
+                    </p>
+                    <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-2 font-bold">
                       {unit.label}
-                    </Text>
-                  </Box>
-                </HStack>
+                    </p>
+                  </div>
+                </div>
               ))}
-            </HStack>
+            </div>
 
             {/* Upcoming bells */}
             {afterNext.length > 0 && (
-              <Box>
-                <Text fontSize="2xs" fontFamily="'Comfortaa', sans-serif" fontWeight="700" color="var(--sw-fg-subtle)" textTransform="uppercase" letterSpacing="wider" mb={2}>
+              <div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">
                   {t("countdown.nextBell")}
-                </Text>
-                <VStack gap={1} align="stretch">
+                </p>
+                <div className="flex flex-col gap-2">
                   {afterNext.map((s, i) => (
-                    <HStack
+                    <div
                       key={i}
-                      gap={2}
-                      px={2}
-                      py={1.5}
-                      borderRadius="var(--sw-radius)"
-                      bg="var(--sw-bg-muted)"
-                      border="1px solid transparent"
-                      _hover={{ bg: "var(--sw-bg-hover)", border: "1px solid var(--sw-border-color)" }}
-                      transition="all 0.15s"
+                      className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/30 dark:bg-white/5 border border-white/20 dark:border-white/10 hover:bg-white/50 dark:hover:bg-white/10 transition-colors"
                     >
-                      <Text
-                        fontSize="xs"
-                        fontFamily="'IBM Plex Mono', monospace"
-                        fontWeight="700"
-                        color="var(--sw-purple-normal)"
-                        whiteSpace="nowrap"
-                      >
+                      <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
                         {formatTimeString(s.start_time, timeFormat)}
-                      </Text>
-                      <FiChevronRight size={10} color="var(--sw-fg-subtle)" />
-                      <Text
-                        fontSize="xs"
-                        fontFamily="'Comfortaa', sans-serif"
-                        fontWeight="600"
-                        color="var(--sw-fg-muted)"
-                        lineClamp={1}
-                      >
+                      </p>
+                      <FiChevronRight size={14} className="text-gray-400" />
+                      <p className="text-sm font-bold text-gray-700 dark:text-gray-300 truncate">
                         {s.label}
-                      </Text>
-                    </HStack>
+                      </p>
+                    </div>
                   ))}
-                </VStack>
-              </Box>
+                </div>
+              </div>
             )}
-          </VStack>
+          </div>
         ) : (
-          <VStack gap={3} py={4} alignItems="center">
-            <Box
-              w={12} h={12}
-              borderRadius="50%"
-              bg="var(--sw-bg-muted)"
-              border="1px solid var(--sw-border-color)"
-              display="flex" alignItems="center" justifyContent="center"
-              opacity={0.6}
-            >
-              <FiBell size={20} color="var(--sw-fg-subtle)" />
-            </Box>
-            <Text fontSize="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="600" color="var(--sw-fg-subtle)" textAlign="center">
+          <div className="flex flex-col items-center justify-center py-8 gap-4">
+            <div className="w-16 h-16 rounded-full bg-black/5 dark:bg-white/5 border border-white/10 flex items-center justify-center">
+              <FiBell size={24} className="text-gray-400" />
+            </div>
+            <p className="text-sm font-bold text-gray-500 text-center">
               {t("countdown.noMore")}
-            </Text>
-          </VStack>
+            </p>
+          </div>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }

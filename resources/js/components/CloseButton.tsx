@@ -1,4 +1,3 @@
-import { IconButton } from "@chakra-ui/react";
 import { FiX } from "react-icons/fi";
 import { useT } from "@/lib/i18n";
 
@@ -12,36 +11,14 @@ interface CloseButtonProps {
 export default function CloseButton({ onClick, size = "xs", top = 2, right = 2 }: CloseButtonProps) {
   const t = useT();
   return (
-    <IconButton
+    <button
+      type="button"
       aria-label={t("close.aria")}
       onClick={onClick}
-      size={size}
-      position="absolute"
-      top={top}
-      right={right}
-      bg="var(--sw-bg-panel)"
-      border="1px solid var(--sw-border-color)"
-      borderRadius="var(--sw-radius)"
-      boxShadow="0.2rem 0.2rem 0 var(--sw-shadow-color)"
-      color="var(--sw-fg)"
-      _hover={{
-        bg: "var(--sw-pink-light)",
-        transform: "translate(-0.05rem, -0.05rem)",
-        boxShadow: "0.25rem 0.25rem 0 var(--sw-shadow-color)",
-      }}
-      _active={{
-        transform: "translate(0.15rem, 0.15rem)",
-        boxShadow: "0.05rem 0.05rem 0 var(--sw-shadow-color)",
-      }}
-      transition="box-shadow 0.1s, transform 0.2s"
-      css={{
-        "&": {
-          boxShadow: "0.2rem 0.2rem 0 var(--sw-shadow-color) !important",
-          border: "1px solid var(--sw-border-color) !important",
-        },
-      }}
+      className={`absolute flex items-center justify-center rounded-lg transition-colors border border-white/20 dark:border-white/10 bg-white/50 dark:bg-black/20 hover:bg-rose-500 hover:text-white hover:border-rose-500 text-gray-500 shadow-sm ${size === "xs" ? "w-6 h-6" : "w-8 h-8"}`}
+      style={{ top: typeof top === "number" ? top * 4 : top, right: typeof right === "number" ? right * 4 : right }}
     >
       <FiX size={size === "xs" ? 14 : 16} strokeWidth={2.5} />
-    </IconButton>
+    </button>
   );
 }

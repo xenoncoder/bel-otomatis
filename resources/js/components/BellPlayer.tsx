@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Button, Dialog, VStack, Text, Box, HStack, Progress } from "@chakra-ui/react";
 import { FiBell, FiX, FiClock, FiRepeat, FiPause, FiPlay } from "react-icons/fi";
 import { useT } from "@/lib/i18n";
-import { toaster } from "@/lib/toaster";
+import { useToast } from "@/components/ui/ToastProvider";
 import { useTimeFormat, formatTimeString } from "@/lib/time-format";
 import type { Schedule } from "@/lib/types";
+import { GlassButton } from "@/components/ui/GlassComponents";
 
 interface BellPlayerProps {
   shouldRing: boolean;
@@ -24,6 +24,7 @@ export default function BellPlayer({ shouldRing, schedule, onDismiss }: BellPlay
   const [isPlaying, setIsPlaying] = useState(false);
   const t = useT();
   const timeFormat = useTimeFormat();
+  const { toast } = useToast();
 
   const maxPlays = schedule?.loop_until_stopped ? Infinity : (schedule?.repeat_count ?? 1);
   const isLoop = schedule?.loop_until_stopped ?? false;
@@ -81,7 +82,7 @@ export default function BellPlayer({ shouldRing, schedule, onDismiss }: BellPlay
 
   const handleStop = () => {
     if (snoozed) {
-      toaster.create({ title: "Batalkan penundaan alarm", type: "info" });
+      toast({ title: "Batalkan penundaan alarm", type: "info" });
     }
     stopAudio();
     setSnoozed(false);
@@ -110,197 +111,114 @@ export default function BellPlayer({ shouldRing, schedule, onDismiss }: BellPlay
   };
 
   const open = shouldRing || snoozed;
-  const progressVal = maxPlays === Infinity ? undefined : ((currentPlay) / maxPlays) * 100;
+  const progressVal = maxPlays === Infinity ? 0 : ((currentPlay) / maxPlays) * 100;
 
   if (!open) return null;
 
   return (
-    <Box
-      position="fixed"
-      bottom={{ base: 4, md: 8 }}
-      right={{ base: 4, md: 8 }}
-      zIndex="toast"
-      bg="var(--sw-bg-card)"
-      border="2px solid var(--sw-border-color)"
-      borderRadius="var(--sw-radius-lg)"
-      boxShadow="0.5rem 0.5rem 0 var(--sw-shadow-color)"
-      w={{ base: "calc(100vw - 2rem)", sm: "340px" }}
-      overflow="hidden"
-      animation="slideUp 0.3s ease-out"
-    >
-      <style>{`
-        @keyframes slideUp {
-          from { transform: translateY(100%); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-      `}</style>
-      
-      {/* Top stripe */}
-      <Box h="6px" bg={isLoop ? "var(--sw-purple-normal)" : "var(--sw-pink-normal)"} />
+    <div className="fixed bottom-4 md:bottom-8 right-4 md:right-8 z-50 w-[calc(100vw-2rem)] sm:w-[340px] animate-slide-up">
+      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        {/* Top stripe */}
+        <div className={`h-1.5 w-full ${isLoop ? "bg-indigo-500" : "bg-pink-500"}`} />
 
-      <VStack gap={0} align="stretch">
         {/* Header section with animated bell */}
-        <Box
-          bg={isLoop ? "var(--sw-purple-light)" : "var(--sw-pink-light)"}
-          px={4} py={4}
-          textAlign="center"
-          borderBottom="1px solid var(--sw-border-color)"
-          position="relative"
-        >
-          <HStack gap={3} align="center" justify="center">
+        <div className={`px-4 py-4 text-center border-b border-white/10 relative ${isLoop ? "bg-indigo-500/10" : "bg-pink-500/10"}`}>
+          <div className="flex items-center justify-center gap-3">
             {/* Animated bell */}
-            <Box
-              className="sw-ring"
-              w={12} h={12}
-              borderRadius="full"
-              border="2px solid var(--sw-border-color)"
-              bg={isLoop ? "var(--sw-purple-normal)" : "var(--sw-pink-normal)"}
-              color="#ffffff"
-              display="flex" alignItems="center" justifyContent="center"
-              boxShadow="0.2rem 0.2rem 0 var(--sw-shadow-color)"
-              flexShrink={0}
-            >
-              <Box as={FiBell} boxSize={5} />
-            </Box>
-            <VStack align="flex-start" gap={0} overflow="hidden">
-              <Text
-                fontSize="2xs"
-                color="var(--sw-fg)"
-                fontWeight="700"
-                textTransform="uppercase"
-                letterSpacing="0.1em"
-                fontFamily="'Comfortaa', sans-serif"
-                opacity={0.6}
-              >
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-white shadow-lg animate-pulse ${isLoop ? "bg-indigo-500" : "bg-pink-500"}`}>
+              <FiBell size={20} />
+            </div>
+            
+            <div className="flex flex-col items-start overflow-hidden text-left">
+              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">
                 {snoozed ? t("player.snoozed") : t("player.ringing")}
-              </Text>
-              <Text
-                fontSize="md"
-                fontWeight="800"
-                color="var(--sw-fg)"
-                fontFamily="'Comfortaa', sans-serif"
-                lineHeight="1.2"
-                truncate
-                maxW="200px"
-              >
+              </span>
+              <h3 className="text-base font-black font-heading text-gray-800 dark:text-gray-100 truncate w-full max-w-[200px] leading-tight">
                 {schedule?.label ?? t("player.bell")}
-              </Text>
-              <Text
-                fontSize="xs"
-                color="var(--sw-fg)"
-                fontFamily="'IBM Plex Mono', monospace"
-                fontWeight="700"
-                opacity={0.7}
-              >
+              </h3>
+              <span className="text-xs font-bold font-body text-gray-600 dark:text-gray-400 opacity-70">
                 {formatTimeString(schedule?.start_time, timeFormat)} {t("common.wib")}
-              </Text>
-            </VStack>
-          </HStack>
-        </Box>
+              </span>
+            </div>
+          </div>
+        </div>
 
         {/* Info section */}
-        <Box px={4} py={4}>
-          <VStack gap={3} align="stretch">
-            {/* Playback info */}
-            <Box>
-              {isLoop ? (
-                <HStack
-                  gap={2}
-                  p={2}
-                  borderRadius="var(--sw-radius)"
-                  bg="var(--sw-bg-muted)"
-                  border="1px solid var(--sw-border-color)"
-                  justify="center"
-                >
-                  <FiRepeat size={12} color="var(--sw-purple-normal)" />
-                  <Text fontSize="xs" color="var(--sw-purple-normal)" fontWeight="700" fontFamily="'Comfortaa', sans-serif">
-                    {t("player.loopMode")}
-                  </Text>
-                </HStack>
-              ) : maxPlays > 1 ? (
-                <VStack gap={1}>
-                  <HStack justify="space-between" w="full">
-                    <Text fontSize="2xs" color="var(--sw-fg-subtle)" fontFamily="'IBM Plex Mono', monospace">
-                      {t("player.playProgress", { current: currentPlay + 1, total: maxPlays })}
-                    </Text>
-                    <Text fontSize="2xs" color="var(--sw-fg-subtle)" fontFamily="'IBM Plex Mono', monospace">
-                      {isPlaying ? t("player.playing") : t("player.finished")}
-                    </Text>
-                  </HStack>
-                  <Progress.Root value={progressVal} size="xs" w="full" colorPalette="pink">
-                    <Progress.Track bg="var(--sw-bg-muted)" borderRadius="var(--sw-radius)">
-                      <Progress.Range borderRadius="var(--sw-radius)" />
-                    </Progress.Track>
-                  </Progress.Root>
-                </VStack>
-              ) : (
-                <HStack justify="center" gap={2}>
-                  <Text fontSize="xs" color="var(--sw-fg-subtle)" fontFamily="'IBM Plex Mono', monospace">
+        <div className="p-4 flex flex-col gap-4 bg-black/5 dark:bg-white/5">
+          {/* Playback info */}
+          <div>
+            {isLoop ? (
+              <div className="flex items-center justify-center gap-2 p-2 rounded-xl bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/10">
+                <FiRepeat size={14} className="text-indigo-500" />
+                <span className="text-xs font-bold font-heading text-indigo-600 dark:text-indigo-400">
+                  {t("player.loopMode")}
+                </span>
+              </div>
+            ) : maxPlays > 1 ? (
+              <div className="flex flex-col gap-1.5">
+                <div className="flex justify-between w-full">
+                  <span className="text-[10px] font-bold font-body text-gray-500">
+                    {t("player.playProgress", { current: currentPlay + 1, total: maxPlays })}
+                  </span>
+                  <span className="text-[10px] font-bold font-body text-gray-500">
                     {isPlaying ? t("player.playing") : t("player.finished")}
-                  </Text>
-                </HStack>
-              )}
-            </Box>
-
-            {/* Snoozed state */}
-            {snoozed ? (
-              <VStack gap={2}>
-                <Box
-                  p={2}
-                  borderRadius="var(--sw-radius)"
-                  bg="var(--sw-yellow-light)"
-                  border="1px solid var(--sw-yellow-dark)"
-                  textAlign="center"
-                >
-                  <Text fontSize="xs" color="#ffffff" fontFamily="'IBM Plex Mono', monospace">
-                    {t("player.snoozeIn", { minutes: SNOOZE_SEC / 60 })}
-                  </Text>
-                </Box>
-                <Button className="sw-btn" variant="ghost" size="sm" onClick={handleStop} colorPalette="red" w="full">
-                  <Box as={FiX} /> {t("player.cancelSnooze")}
-                </Button>
-              </VStack>
+                  </span>
+                </div>
+                <div className="w-full h-1.5 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-pink-500 transition-all duration-300" 
+                    style={{ width: `${progressVal}%` }} 
+                  />
+                </div>
+              </div>
             ) : (
-              <VStack gap={2}>
-                {/* Main controls */}
-                <HStack gap={2} w="full">
-                  <Button
-                    variant="outline"
-                    flex={1}
-                    size="xs"
-                    onClick={handlePauseResume}
-                    colorPalette={isPlaying ? "yellow" : "green"}
-                  >
-                    <Box as={isPlaying ? FiPause : FiPlay} />
-                    {isPlaying ? t("player.pause") : t("player.resume")}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    flex={1}
-                    size="xs"
-                    onClick={handleSnooze}
-                  >
-                    <Box as={FiClock} /> {t("player.snooze5")}
-                  </Button>
-                </HStack>
-
-                {/* Stop button */}
-                <Button
-                  colorPalette={isLoop ? "purple" : "pink"}
-                  size="sm"
-                  onClick={handleStop}
-                  w="full"
-                  fontWeight="800"
-                  fontFamily="'Comfortaa', sans-serif"
-                >
-                  <FiX size={14} />
-                  {isLoop ? t("player.stopBell") : t("player.stop")}
-                </Button>
-              </VStack>
+              <div className="flex justify-center gap-2">
+                <span className="text-xs font-bold font-body text-gray-500">
+                  {isPlaying ? t("player.playing") : t("player.finished")}
+                </span>
+              </div>
             )}
-          </VStack>
-        </Box>
-      </VStack>
-    </Box>
+          </div>
+
+          {/* Controls */}
+          {snoozed ? (
+            <div className="flex flex-col gap-2">
+              <div className="p-2 rounded-xl bg-amber-500 text-white text-center font-bold text-xs font-body shadow-sm">
+                {t("player.snoozeIn", { minutes: SNOOZE_SEC / 60 })}
+              </div>
+              <GlassButton variant="danger" onClick={handleStop} className="w-full">
+                <FiX /> {t("player.cancelSnooze")}
+              </GlassButton>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2 w-full">
+                <GlassButton 
+                  variant="ghost" 
+                  onClick={handlePauseResume} 
+                  className={`flex-1 !px-2 !py-2 ${isPlaying ? "text-amber-500 hover:text-amber-600" : "text-emerald-500 hover:text-emerald-600"}`}
+                >
+                  {isPlaying ? <FiPause /> : <FiPlay />}
+                  {isPlaying ? t("player.pause") : t("player.resume")}
+                </GlassButton>
+                
+                <GlassButton variant="ghost" onClick={handleSnooze} className="flex-1 !px-2 !py-2">
+                  <FiClock /> {t("player.snooze5")}
+                </GlassButton>
+              </div>
+
+              <GlassButton 
+                variant={isLoop ? "primary" : "danger"} 
+                onClick={handleStop} 
+                className="w-full !py-2 shadow-sm"
+              >
+                <FiX size={16} />
+                {isLoop ? t("player.stopBell") : t("player.stop")}
+              </GlassButton>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

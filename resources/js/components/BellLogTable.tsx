@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { BellLog } from "@/lib/types";
-import { Badge, Box, HStack, Text, VStack } from "@chakra-ui/react";
 import { FiActivity, FiBell } from "react-icons/fi";
 import { useT, useLang } from "@/lib/i18n";
 import { useTimeFormat } from "@/lib/time-format";
+import { GlassBadge } from "./ui/GlassComponents";
 
 export default function BellLogTable({ refreshKey = 0 }: { refreshKey?: number }) {
   const t = useT();
@@ -25,89 +25,64 @@ export default function BellLogTable({ refreshKey = 0 }: { refreshKey?: number }
 
   if (loading) {
     return (
-      <VStack py={6} color="var(--sw-fg-subtle)" fontSize="sm">
-        <FiActivity size={24} style={{ opacity: 0.4 }} />
-        <Text>{t("bellLog.loading")}</Text>
-      </VStack>
+      <div className="flex flex-col items-center justify-center py-8 gap-3 text-gray-500">
+        <FiActivity size={24} className="opacity-40 animate-pulse" />
+        <p className="text-sm font-bold">{t("bellLog.loading")}</p>
+      </div>
     );
   }
 
   if (logs.length === 0) {
     return (
-      <VStack py={6} color="var(--sw-fg-subtle)" fontSize="sm">
-        <FiBell size={24} style={{ opacity: 0.4 }} />
-        <Text>{t("bellLog.empty")}</Text>
-      </VStack>
+      <div className="flex flex-col items-center justify-center py-8 gap-3 text-gray-500">
+        <FiBell size={24} className="opacity-40" />
+        <p className="text-sm font-bold">{t("bellLog.empty")}</p>
+      </div>
     );
   }
 
   return (
-    <Box
-      borderRadius="0"
-      overflow="hidden"
-    >
-      <VStack
-        gap={0}
-        align="stretch"
-        maxH="300px"
-        overflowY="auto"
-        overflowX="hidden"
-        css={{
-          "&::-webkit-scrollbar": { width: "4px" },
-          "&::-webkit-scrollbar-thumb": { background: "var(--sw-purple-normal)", borderRadius: "999px" },
-        }}
-      >
+    <div className="overflow-hidden">
+      <div className="flex flex-col max-h-[300px] overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-indigo-500 scrollbar-track-transparent">
         {logs.map((log, i) => (
-          <HStack
+          <div
             key={log.id}
-            gap={3}
-            px={4}
-            py={3}
-            bg={i % 2 === 0 ? "var(--sw-bg-muted)" : "transparent"}
-            _hover={{ bg: "var(--sw-bg-hover)" }}
-            transition="background 0.1s"
-            align="center"
-            borderBottom={i < logs.length - 1 ? "1px solid var(--sw-table-border)" : undefined}
+            className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+              i % 2 === 0 ? "bg-black/5 dark:bg-white/5" : "bg-transparent"
+            } hover:bg-black/10 dark:hover:bg-white/10 ${
+              i < logs.length - 1 ? "border-b border-white/10 dark:border-white/5" : ""
+            }`}
           >
-            <Box
-              w={7} h={7} flexShrink={0}
-              borderRadius="var(--sw-radius)"
-              bg={log.status === "manual" ? "var(--sw-yellow-normal)" : "var(--sw-green-normal)"}
-              border="1px solid var(--sw-border-color)"
-              display="flex" alignItems="center" justifyContent="center"
+            <div
+              className={`w-8 h-8 shrink-0 rounded-xl flex items-center justify-center border shadow-inner ${
+                log.status === "manual"
+                  ? "bg-amber-500/80 border-amber-400 text-white"
+                  : "bg-emerald-500/80 border-emerald-400 text-white"
+              }`}
             >
-              <FiBell size={13} color="#ffffff" />
-            </Box>
-            <VStack gap={0} align="start" flex={1} minW={0}>
-              <Text fontSize="sm" fontWeight="700" fontFamily="'Comfortaa', sans-serif" lineClamp={1}>
+              <FiBell size={14} />
+            </div>
+            
+            <div className="flex flex-col items-start flex-1 min-w-0">
+              <p className="text-sm font-bold font-heading text-gray-800 dark:text-gray-100 truncate w-full">
                 {log.schedule?.label ?? t("bellLog.bell")}
-              </Text>
-              <Text fontSize="2xs" color="var(--sw-fg-subtle)" fontFamily="'IBM Plex Mono', monospace" whiteSpace="nowrap">
+              </p>
+              <p className="text-[10px] font-body text-gray-500 whitespace-nowrap uppercase tracking-widest mt-0.5">
                 {new Date(log.triggered_at).toLocaleString(locale, {
                   day: "2-digit", month: "short",
                   hour: "2-digit", minute: "2-digit",
                   hour12: timeFormat === "12",
                   timeZone: "Asia/Jakarta",
                 })}
-              </Text>
-            </VStack>
-            <Badge
-              colorPalette={log.status === "manual" ? "yellow" : "green"}
-              variant="solid"
-              fontSize="2xs"
-              px={2}
-              py={0.5}
-              borderRadius="var(--sw-radius)"
-              textTransform="capitalize"
-              fontFamily="'Comfortaa', sans-serif"
-              fontWeight="700"
-              flexShrink={0}
-            >
+              </p>
+            </div>
+            
+            <GlassBadge color={log.status === "manual" ? "yellow" : "green"} className="shrink-0">
               {t("logStatus." + log.status)}
-            </Badge>
-          </HStack>
+            </GlassBadge>
+          </div>
         ))}
-      </VStack>
-    </Box>
+      </div>
+    </div>
   );
 }

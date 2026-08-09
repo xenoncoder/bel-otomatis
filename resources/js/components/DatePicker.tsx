@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Box, HStack, Text } from "@chakra-ui/react";
 import { FiChevronLeft, FiChevronRight, FiCalendar } from "react-icons/fi";
 import { createPortal } from "react-dom";
 import { useT, useLang } from "@/lib/i18n";
@@ -34,7 +33,6 @@ function firstDayOfMonth(y: number, m: number): number {
   return new Date(y, m, 1).getDay();
 }
 
-const MONTH_KEYS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
 const MONTH_FULL_KEYS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
 const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
@@ -74,6 +72,7 @@ export default function DatePicker({ value, onChange, label, placeholder }: Date
       onChange(`${p[2]}-${p[1]}-${p[0]}`);
     }
   };
+  
   const popupRef = useRef<HTMLDivElement>(null);
   const [coords, setCoords] = useState({ top: 0, left: 0 });
 
@@ -139,91 +138,77 @@ export default function DatePicker({ value, onChange, label, placeholder }: Date
   for (let i = 0; i < firstDay; i++) cells.push(null);
   for (let d = 1; d <= dim; d++) cells.push(d);
 
-  const displayValue = parsed
-    ? new Date(parsed.y, parsed.m, parsed.d).toLocaleDateString(locale, {
-        weekday: "short", day: "2-digit", month: "short", year: "numeric",
-      })
-    : (placeholder ?? t("datePicker.selectDate"));
-
   return (
-    <Box ref={containerRef} position="relative">
+    <div ref={containerRef} className="relative">
       {label && (
-        <Text fontSize="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="700" mb={1.5}>
+        <p className="text-sm font-heading font-bold mb-1.5 text-gray-700 dark:text-gray-300">
           {label}
-        </Text>
+        </p>
       )}
 
-      <HStack
-        className="sw-timepicker-display"
-        gap={2}
-        position="relative"
+      <div
+        className="flex items-center gap-2 px-4 h-[42px] rounded-xl border border-white/20 dark:border-white/10 bg-white/50 dark:bg-black/20 cursor-pointer shadow-inner focus-within:ring-2 focus-within:ring-indigo-500/50 focus-within:border-indigo-500 transition-all w-full"
         onClick={() => setOpen(true)}
       >
-        <Box color="var(--sw-purple-normal)" flexShrink={0} cursor="pointer" onClick={(e) => { e.stopPropagation(); setOpen(!open); }} display="flex" alignItems="center">
+        <div 
+          className="text-indigo-500 shrink-0 cursor-pointer flex items-center" 
+          onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        >
           <FiCalendar size={16} />
-        </Box>
+        </div>
         <input
           type="text"
           value={inputValue}
           onChange={handleInputChange}
           onFocus={() => setOpen(true)}
           placeholder={placeholder || "DD-MM-YYYY"}
-          style={{ width: "100%", background: "transparent", border: "none", outline: "none", color: "var(--sw-fg)", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.9rem", fontWeight: "700" }}
+          className="w-full bg-transparent border-none outline-none text-gray-800 dark:text-gray-200 font-body text-[0.9rem] font-bold"
         />
-      </HStack>
+      </div>
 
       {open && createPortal(
         <div
           ref={popupRef}
-          className="sw-timepicker-popup"
           style={{
             position: "fixed",
             top: coords.top,
             left: coords.left,
             zIndex: 99999,
-            width: 300,
-            maxWidth: "calc(100vw - 1rem)",
-            background: "var(--sw-bg-card)",
-            border: "1px solid var(--sw-border-color)",
-            borderRadius: "var(--sw-radius)",
-            boxShadow: "0.4rem 0.4rem 0 var(--sw-shadow-color)",
-            overflow: "hidden",
           }}
+          className="w-[300px] max-w-[calc(100vw-1rem)] bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-xl overflow-hidden flex flex-col"
         >
-          <Box px={3} py={2} bg="var(--sw-purple-normal)" display="flex" alignItems="center" justifyContent="space-between">
+          <div className="px-4 py-3 bg-indigo-500 flex items-center justify-between text-white">
             <button
               type="button"
-              className="sw-timepicker-stepper"
+              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
               onClick={prevMonth}
-              style={{ width: 24, height: 24 }}
             >
-              <FiChevronLeft size={14} />
+              <FiChevronLeft size={18} />
             </button>
-            <Text fontSize="xs" fontFamily="'Comfortaa', sans-serif" fontWeight="800" color="var(--sw-fg)">
+            <p className="text-sm font-heading font-black">
               {t("datePicker.monthsFull." + MONTH_FULL_KEYS[viewM])} {viewY}
-            </Text>
+            </p>
             <button
               type="button"
-              className="sw-timepicker-stepper"
+              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
               onClick={nextMonth}
-              style={{ width: 24, height: 24 }}
             >
-              <FiChevronRight size={14} />
+              <FiChevronRight size={18} />
             </button>
-          </Box>
+          </div>
 
-          <Box p={2}>
-            <Box display="grid" gridTemplateColumns="repeat(7, 1fr)" gap={1} mb={1}>
+          <div className="p-3">
+            <div className="grid grid-cols-7 gap-1 mb-2">
               {DAY_KEYS.map((dk) => (
-                <Text key={dk} fontSize="2xs" fontFamily="'Comfortaa', sans-serif" fontWeight="800" textAlign="center" color="var(--sw-fg-subtle)" textTransform="uppercase">
+                <p key={dk} className="text-[10px] font-heading font-black text-center text-gray-500 uppercase tracking-widest">
                   {t("datePicker.daysShort." + dk)}
-                </Text>
+                </p>
               ))}
-            </Box>
+            </div>
 
-            <Box display="grid" gridTemplateColumns="repeat(7, 1fr)" gap={1}>
+            <div className="grid grid-cols-7 gap-1">
               {cells.map((d, i) => {
-                if (d === null) return <Box key={i} />;
+                if (d === null) return <div key={i} />;
                 const dateStr = formatDate(viewY, viewM, d);
                 const isSelected = value === dateStr;
                 const isToday = todayStr === dateStr;
@@ -232,47 +217,27 @@ export default function DatePicker({ value, onChange, label, placeholder }: Date
                     key={i}
                     type="button"
                     onClick={() => selectDate(d)}
-                    style={{
-                      height: 32,
-                      borderRadius: "var(--sw-radius)",
-                      border: isSelected
-                        ? "1px solid var(--sw-border-color)"
+                    className={`
+                      h-8 rounded-lg font-body text-xs font-bold transition-all flex items-center justify-center
+                      ${isSelected 
+                        ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/20" 
                         : isToday
-                        ? "1px solid var(--sw-purple-normal)"
-                        : "1px solid transparent",
-                      background: isSelected ? "var(--sw-purple-normal)" : "transparent",
-                      color: isSelected ? "#000" : "var(--sw-fg)",
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "0.8rem",
-                      fontWeight: isSelected ? 700 : 500,
-                      cursor: "pointer",
-                      boxShadow: isSelected ? "0.15rem 0.15rem 0 var(--sw-shadow-color)" : "none",
-                      transition: "all 0.1s",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.background = "var(--sw-purple-light)";
-                        e.currentTarget.style.transform = "translateY(-1px)";
+                        ? "border border-indigo-500 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/10"
                       }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.background = "transparent";
-                        e.currentTarget.style.transform = "none";
-                      }
-                    }}
+                    `}
                   >
                     {d}
                   </button>
                 );
               })}
-            </Box>
-          </Box>
+            </div>
+          </div>
 
-          <HStack gap={2} p={2} borderTop="1px solid var(--sw-border-color)" bg="var(--sw-bg-muted)" justify="space-between">
+          <div className="flex gap-2 p-3 border-t border-white/10 bg-black/5 dark:bg-white/5 justify-between">
             <button
               type="button"
-              className="sw-timepicker-preset"
+              className="px-4 py-1.5 rounded-lg text-xs font-bold font-body text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
               onClick={() => {
                 const now = new Date();
                 setViewY(now.getFullYear());
@@ -284,15 +249,15 @@ export default function DatePicker({ value, onChange, label, placeholder }: Date
             </button>
             <button
               type="button"
-              className="sw-timepicker-done"
+              className="px-4 py-1.5 rounded-lg text-xs font-bold font-body bg-indigo-500 text-white hover:bg-indigo-600 transition-colors shadow-sm"
               onClick={() => setOpen(false)}
             >
               {t("common.ok")}
             </button>
-          </HStack>
+          </div>
         </div>,
         document.body
       )}
-    </Box>
+    </div>
   );
 }

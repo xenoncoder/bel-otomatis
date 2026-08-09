@@ -1,16 +1,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import type { BellLog } from "@/lib/types";
-import {
-  Badge, Box, Button, Dialog, HStack, Heading, IconButton, Text, VStack,
-} from "@chakra-ui/react";
-import { FiActivity, FiTrash2, FiAlertTriangle } from "react-icons/fi";
+import { FiActivity, FiTrash2, FiAlertTriangle, FiFileText } from "react-icons/fi";
 import { useT, useLang } from "@/lib/i18n";
 import { useTimeFormat } from "@/lib/time-format";
-import { toaster } from "@/lib/toaster";
+import { useToast } from "@/components/ui/ToastProvider";
 import { DataTable, type Column } from "@/components/DataTable";
-import CloseButton from "@/components/CloseButton";
-import BackgroundOrnament from "@/components/BackgroundOrnament";
+import { GlassCard, GlassButton, GlassBadge } from "@/components/ui/GlassComponents";
+import { GlassModal } from "@/components/ui/GlassModal";
 
 export default function LogsPage() {
   const t = useT();
@@ -22,6 +19,7 @@ export default function LogsPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState<BellLog | null>(null);
   const [clearOpen, setClearOpen] = useState(false);
+  const { toast } = useToast();
 
   const dayLabel: Record<string, string> = {
     monday: t("schedules.days.monday"), tuesday: t("schedules.days.tuesday"), wednesday: t("schedules.days.wednesday"),
@@ -43,22 +41,22 @@ export default function LogsPage() {
     if (!deleteTarget) return;
     try {
       await api.bellLogs.delete(deleteTarget.id);
-      toaster.create({ title: t("logs.deleted"), type: "success" });
+      toast({ title: t("logs.deleted"), type: "success" });
       setDeleteTarget(null);
       setRefreshKey((n) => n + 1);
     } catch (e) {
-      toaster.create({ title: (e as Error).message, type: "error" });
+      toast({ title: (e as Error).message, type: "error" });
     }
   };
 
   const handleClearAll = async () => {
     try {
       await api.bellLogs.clearAll();
-      toaster.create({ title: t("logs.allCleared"), type: "success" });
+      toast({ title: t("logs.allCleared"), type: "success" });
       setClearOpen(false);
       setRefreshKey((n) => n + 1);
     } catch (e) {
-      toaster.create({ title: (e as Error).message, type: "error" });
+      toast({ title: (e as Error).message, type: "error" });
     }
   };
 
@@ -68,23 +66,23 @@ export default function LogsPage() {
       label: t("table.waktu"),
       sortValue: (log) => log.triggered_at,
       render: (log) => (
-        <Text fontFamily="'IBM Plex Mono', monospace" fontSize="xs" whiteSpace="nowrap">
+        <span className="font-body text-xs font-bold text-gray-500 whitespace-nowrap uppercase tracking-widest">
           {new Date(log.triggered_at).toLocaleString(locale, {
             day: "2-digit", month: "short", year: "numeric",
             hour: "2-digit", minute: "2-digit", second: "2-digit",
             hour12: timeFormat === "12",
             timeZone: "Asia/Jakarta",
           })}
-        </Text>
+        </span>
       ),
     },
     {
       key: "hari",
       label: t("table.hari"),
       render: (log) => (
-        <Text textTransform="capitalize" whiteSpace="nowrap">
+        <span className="capitalize font-bold text-sm whitespace-nowrap text-gray-700 dark:text-gray-300">
           {log.schedule?.day ? (dayLabel[log.schedule.day] ?? log.schedule.day) : "-"}
-        </Text>
+        </span>
       ),
     },
     {
@@ -92,80 +90,76 @@ export default function LogsPage() {
       label: t("common.label"),
       sortValue: (log) => log.schedule?.label ?? "",
       render: (log) => (
-        <Text fontWeight="600" fontFamily="'Comfortaa', sans-serif">
+        <span className="font-heading font-black text-gray-800 dark:text-gray-100">
           {log.schedule?.label ?? "-"}
-        </Text>
+        </span>
       ),
     },
     {
       key: "jam",
       label: t("table.jam"),
       render: (log) => (
-        <Text fontFamily="'IBM Plex Mono', monospace" whiteSpace="nowrap" color="var(--sw-purple-normal)" fontWeight="700">
+        <span className="font-body font-black text-indigo-600 dark:text-indigo-400 whitespace-nowrap">
           {log.schedule?.start_time ?? "-"}
-        </Text>
+        </span>
       ),
     },
     {
       key: "status",
       label: t("common.status"),
       render: (log) => (
-        <Badge
-          colorPalette={log.status === "manual" ? "yellow" : "green"}
-          variant="solid"
-          fontSize="2xs"
-          px={2}
-          py={0.5}
-          borderRadius="var(--sw-radius)"
-          textTransform="capitalize"
-          fontFamily="'Comfortaa', sans-serif"
-          fontWeight="700"
-        >
+        <GlassBadge color={log.status === "manual" ? "yellow" : "green"}>
           {t("logStatus." + log.status)}
-        </Badge>
+        </GlassBadge>
       ),
     },
     {
       key: "aksi",
       label: t("common.action"),
       align: "center",
-      width: "60px",
       render: (log) => (
-        <HStack gap={1} justify="center">
-          <IconButton
-            aria-label={t("common.delete")}
-            size="xs"
-            variant="ghost"
-            colorPalette="red"
+        <div className="flex justify-center">
+          <button
+            title={t("common.delete")}
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-white/50 dark:bg-white/10 hover:bg-rose-500 hover:text-white text-rose-600 dark:text-rose-400 transition-colors shadow-sm"
             onClick={(e) => { e.stopPropagation(); setDeleteTarget(log); }}
           >
-            <FiTrash2 />
-          </IconButton>
-        </HStack>
+            <FiTrash2 size={14} />
+          </button>
+        </div>
       ),
     },
   ];
 
   return (
-    <Box position="relative">
-      <BackgroundOrnament variant="normal" />
-      <VStack gap={6} align="stretch" position="relative" zIndex={1}>
-      <HStack justify="space-between" wrap="wrap" gap={4} align="start">
-        <Heading size={{ base: "xl", md: "2xl" }} fontFamily="'Comfortaa', sans-serif" fontWeight="300" color="var(--sw-fg-heading)">
-          {t("logs.title")}
-        </Heading>
-        {logs.length > 0 && (
-          <Button variant="outline" size="sm" colorPalette="red" onClick={() => setClearOpen(true)} flexShrink={0}>
-            <Box as={FiTrash2} /> {t("logs.clearAll")}
-          </Button>
-        )}
-      </HStack>
+    <div className="relative max-w-7xl mx-auto flex flex-col gap-6">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl shadow-purple-500/20">
+            <FiFileText size={28} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl md:text-4xl font-heading font-black text-gray-800 dark:text-gray-100">
+              {t("logs.title")}
+            </h1>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          {logs.length > 0 && (
+            <GlassButton variant="danger" onClick={() => setClearOpen(true)} className="flex-1 md:flex-none">
+              <FiTrash2 /> {t("logs.clearAll")}
+            </GlassButton>
+          )}
+        </div>
+      </div>
 
-      <Box className="sw-card" borderRadius="var(--sw-radius)">
-        <Box className="sw-card-header sw-card-header-green">
-          <Heading size="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="800">{t("logs.history")}</Heading>
-        </Box>
-        <Box className="sw-card-body" p={{ base: 4, md: 6 }}>
+      <GlassCard className="!p-0 overflow-hidden flex flex-col">
+        <div className="bg-emerald-500/10 border-b border-emerald-500/20 px-6 py-4">
+          <h2 className="font-heading font-bold text-lg text-emerald-800 dark:text-emerald-300">
+            {t("logs.history")}
+          </h2>
+        </div>
+        <div className="p-4 md:p-6 bg-black/5 dark:bg-white/5">
           <DataTable
             columns={columns}
             data={logs}
@@ -174,93 +168,58 @@ export default function LogsPage() {
             pageSize={10}
             footerLabel={(count) => t("table.totalLogs", { count })}
             emptyContent={
-              <VStack gap={1}>
-                <FiActivity size={28} style={{ opacity: 0.4 }} />
-                <Text>{t("table.noActivity")}</Text>
-              </VStack>
+              <div className="flex flex-col gap-2 items-center justify-center py-10 text-gray-500">
+                <FiActivity size={32} className="opacity-40 animate-pulse" />
+                <p className="font-bold text-sm">{t("table.noActivity")}</p>
+              </div>
             }
           />
-        </Box>
-      </Box>
+        </div>
+      </GlassCard>
 
       {/* Delete single log dialog */}
-      <Dialog.Root open={!!deleteTarget} onOpenChange={(e) => !e.open && setDeleteTarget(null)} placement="center">
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
-          <Dialog.Content maxW={{ base: "calc(100vw - 2rem)", sm: "400px" }}>
-            <Box className="sw-dialog-strip sw-dialog-strip-pink" />
-            <Dialog.Header>
-              <Dialog.Title>{t("logs.deleteTitle")}</Dialog.Title>
-              <Dialog.CloseTrigger asChild>
-                <CloseButton />
-              </Dialog.CloseTrigger>
-            </Dialog.Header>
-            <Dialog.Body>
-              <HStack gap={3} align="start">
-                <Box
-                  w={10} h={10}
-                  borderRadius="var(--sw-radius)"
-                  bg="var(--sw-pink-light)"
-                  border="1px solid var(--sw-pink-dark)"
-                  display="flex" alignItems="center" justifyContent="center"
-                  flexShrink={0}
-                >
-                  <FiAlertTriangle size={18} color="#ba797f" />
-                </Box>
-                <Text fontSize="sm" color="var(--sw-fg-muted)">
-                  {t("logs.deleteConfirm")}
-                </Text>
-              </HStack>
-            </Dialog.Body>
-            <Dialog.Footer>
-              <Button variant="outline" size="sm" onClick={() => setDeleteTarget(null)}>{t("common.cancel")}</Button>
-              <Button colorPalette="red" size="sm" onClick={handleDelete}>
-                <Box as={FiTrash2} /> {t("common.delete")}
-              </Button>
-            </Dialog.Footer>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Dialog.Root>
+      <GlassModal 
+        isOpen={!!deleteTarget} 
+        onClose={() => setDeleteTarget(null)} 
+        title={t("logs.deleteTitle")}
+        footer={
+          <>
+            <GlassButton variant="ghost" onClick={() => setDeleteTarget(null)}>{t("common.cancel")}</GlassButton>
+            <GlassButton variant="danger" onClick={handleDelete}><FiTrash2 /> {t("common.delete")}</GlassButton>
+          </>
+        }
+      >
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-500 flex items-center justify-center shrink-0">
+            <FiAlertTriangle size={24} />
+          </div>
+          <p className="font-bold text-gray-800 dark:text-gray-200 mt-2">
+            {t("logs.deleteConfirm")}
+          </p>
+        </div>
+      </GlassModal>
 
       {/* Clear all logs dialog */}
-      <Dialog.Root open={clearOpen} onOpenChange={(e) => setClearOpen(e.open)} placement="center">
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
-          <Dialog.Content maxW={{ base: "calc(100vw - 2rem)", sm: "400px" }}>
-            <Box className="sw-dialog-strip sw-dialog-strip-pink" />
-            <Dialog.Header>
-              <Dialog.Title>{t("logs.clearAllTitle")}</Dialog.Title>
-              <Dialog.CloseTrigger asChild>
-                <CloseButton />
-              </Dialog.CloseTrigger>
-            </Dialog.Header>
-            <Dialog.Body>
-              <HStack gap={3} align="start">
-                <Box
-                  w={10} h={10}
-                  borderRadius="var(--sw-radius)"
-                  bg="var(--sw-pink-light)"
-                  border="1px solid var(--sw-pink-dark)"
-                  display="flex" alignItems="center" justifyContent="center"
-                  flexShrink={0}
-                >
-                  <FiAlertTriangle size={18} color="#ba797f" />
-                </Box>
-                <Text fontSize="sm" color="var(--sw-fg-muted)">
-                  {t("logs.clearAllConfirm", { count: logs.length })}
-                </Text>
-              </HStack>
-            </Dialog.Body>
-            <Dialog.Footer>
-              <Button variant="outline" size="sm" onClick={() => setClearOpen(false)}>{t("common.cancel")}</Button>
-              <Button colorPalette="red" size="sm" onClick={handleClearAll}>
-                <Box as={FiTrash2} /> {t("logs.clearAll")}
-              </Button>
-            </Dialog.Footer>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Dialog.Root>
-    </VStack>
-    </Box>
+      <GlassModal 
+        isOpen={clearOpen} 
+        onClose={() => setClearOpen(false)} 
+        title={t("logs.clearAllTitle")}
+        footer={
+          <>
+            <GlassButton variant="ghost" onClick={() => setClearOpen(false)}>{t("common.cancel")}</GlassButton>
+            <GlassButton variant="danger" onClick={handleClearAll}><FiTrash2 /> {t("logs.clearAll")}</GlassButton>
+          </>
+        }
+      >
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-500 flex items-center justify-center shrink-0">
+            <FiAlertTriangle size={24} />
+          </div>
+          <p className="font-bold text-gray-800 dark:text-gray-200 mt-2">
+            {t("logs.clearAllConfirm", { count: logs.length })}
+          </p>
+        </div>
+      </GlassModal>
+    </div>
   );
 }

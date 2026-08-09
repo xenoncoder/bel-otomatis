@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Box, HStack, Text, VStack } from "@chakra-ui/react";
 import { FiChevronUp, FiChevronDown, FiClock } from "react-icons/fi";
 import { useT } from "@/lib/i18n";
 
@@ -38,8 +37,6 @@ function ScrollColumn({
 }) {
   const listRef = useRef<HTMLDivElement>(null);
   const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isUserScrollingRef = useRef(false);
-  const prevValueRef = useRef(value);
 
   useEffect(() => {
     if (listRef.current) {
@@ -49,7 +46,6 @@ function ScrollColumn({
         listRef.current.scrollTo({ top: target, behavior: "smooth" });
       }
     }
-    prevValueRef.current = value;
   }, [value]);
 
   useEffect(() => {
@@ -64,31 +60,17 @@ function ScrollColumn({
   }, []);
 
   return (
-    <Box
-      className="sw-timecol"
-      position="relative"
-      h={ITEM_H * VISIBLE}
-      overflow="hidden"
-      flex={1}
-    >
-      <Box
+    <div className="relative flex-1 overflow-hidden" style={{ height: ITEM_H * VISIBLE }}>
+      <div
         ref={listRef}
-        h="100%"
-        overflowY="auto"
-        css={{
-          scrollbarWidth: "none",
-          "&::-webkit-scrollbar": { display: "none" },
-          scrollSnapType: "y mandatory",
-        }}
+        className="h-full overflow-y-auto scrollbar-hide snap-y snap-mandatory"
         onScroll={(e) => {
           const el = listRef.current;
           if (!el) return;
-          isUserScrollingRef.current = true;
           if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
           scrollTimerRef.current = setTimeout(() => {
             if (!listRef.current) return;
             const idx = Math.round(el.scrollTop / ITEM_H);
-            isUserScrollingRef.current = false;
             if (idx !== value && idx >= 0 && idx < items.length) {
               listRef.current.scrollTop = idx * ITEM_H;
               onSelect(idx);
@@ -96,29 +78,22 @@ function ScrollColumn({
           }, 80);
         }}
       >
-        <Box h={ITEM_H * 2} />
+        <div style={{ height: ITEM_H * 2 }} />
         {items.map((n) => (
-          <Box
+          <div
             key={n}
-            h={`${ITEM_H}px`}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            fontFamily="'IBM Plex Mono', monospace"
-            fontSize="1.25rem"
-            fontWeight="700"
-            color={n === value ? "var(--sw-fg)" : "var(--sw-fg-subtle)"}
-            opacity={n === value ? 1 : 0.3}
-            transition="opacity 0.15s, color 0.15s"
-            css={{ scrollSnapAlign: "center", cursor: "pointer" }}
+            style={{ height: ITEM_H }}
+            className={`flex items-center justify-center font-body text-xl font-bold snap-center cursor-pointer transition-all ${
+              n === value ? "text-indigo-600 dark:text-indigo-400 opacity-100" : "text-gray-500 opacity-30"
+            }`}
             onClick={() => onSelect(n)}
           >
             {pad(n)}
-          </Box>
+          </div>
         ))}
-        <Box h={ITEM_H * 2} />
-      </Box>
-    </Box>
+        <div style={{ height: ITEM_H * 2 }} />
+      </div>
+    </div>
   );
 }
 
@@ -150,166 +125,86 @@ export default function TimePicker({ value, onChange, label }: TimePickerProps) 
   const secs = Array.from({ length: 60 }, (_, i) => i);
 
   return (
-    <Box ref={containerRef} position="relative">
-      {label && (
-        <Text fontSize="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="700" mb={1.5}>
-          {label}
-        </Text>
-      )}
-
+    <div ref={containerRef} className="relative w-full">
       {/* Display input */}
-      <HStack
-        className="sw-timepicker-display"
-        gap={2}
-        position="relative"
+      <div
+        className="flex items-center gap-3 px-4 py-2 bg-black/5 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-xl cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
         onClick={() => setOpen(true)}
       >
-        <Box color="var(--sw-purple-normal)" flexShrink={0} cursor="pointer" onClick={(e) => { e.stopPropagation(); setOpen(!open); }} display="flex" alignItems="center">
-          <FiClock size={16} />
-        </Box>
+        <FiClock size={16} className="text-indigo-500 shrink-0" />
         <input
           type="text"
           value={value}
           onChange={(e: any) => onChange(e.target.value)}
           onFocus={() => setOpen(true)}
           placeholder="00:00:00"
-          style={{ width: "100%", background: "transparent", border: "none", outline: "none", color: "var(--sw-fg)", fontFamily: "'IBM Plex Mono', monospace", fontSize: "1.1rem", fontWeight: "700" }}
+          className="w-full bg-transparent border-none outline-none text-gray-800 dark:text-gray-200 font-body font-bold text-lg"
         />
-      </HStack>
+      </div>
 
       {/* Popup */}
       {open && (
-        <Box
-          className="sw-timepicker-popup"
-          position="absolute"
-          top="calc(100% + 0.5rem)"
-          left={0}
-          zIndex={50}
-          w="280px"
-          maxW="calc(100vw - 2rem)"
-          bg="var(--sw-bg-card)"
-          border="1px solid var(--sw-border-color)"
-          borderRadius="var(--sw-radius)"
-          boxShadow="0.4rem 0.4rem 0 var(--sw-shadow-color)"
-          overflow="hidden"
-        >
+        <div className="absolute top-full left-0 mt-2 z-50 w-[280px] max-w-[90vw] bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-2xl shadow-indigo-500/20 overflow-hidden">
           {/* Header */}
-          <Box
-            className="sw-timepicker-popup-header"
-            px={3}
-            py={2}
-            bg="var(--sw-purple-normal)"
-            display="flex"
-            alignItems="center"
-            justifyContent="space-between"
-          >
-            <Text fontSize="2xs" fontFamily="'Comfortaa', sans-serif" fontWeight="800" textTransform="uppercase" letterSpacing="0.05em" color="#ffffff">
+          <div className="px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-between">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-white/80">
               {t("timePicker.selectTime")}
-            </Text>
-            <Text fontSize="2xs" fontFamily="'IBM Plex Mono', monospace" fontWeight="700" color="var(--sw-fg)">
+            </span>
+            <span className="text-sm font-black font-body text-white">
               {pad(h)}:{pad(m)}:{pad(s)}
-            </Text>
-          </Box>
+            </span>
+          </div>
 
           {/* Columns Headers */}
-          <HStack px={4} py={2} justify="space-around">
-            <Text flex={1} fontSize="2xs" fontFamily="'Comfortaa', sans-serif" fontWeight="800" textTransform="uppercase" textAlign="center" color="var(--sw-fg-subtle)">
-              {t("timePicker.hours")}
-            </Text>
-            <Box w="1.5rem" /> {/* Spacer for colon */}
-            <Text flex={1} fontSize="2xs" fontFamily="'Comfortaa', sans-serif" fontWeight="800" textTransform="uppercase" textAlign="center" color="var(--sw-fg-subtle)">
-              {t("timePicker.minutes")}
-            </Text>
-            <Box w="1.5rem" /> {/* Spacer for colon */}
-            <Text flex={1} fontSize="2xs" fontFamily="'Comfortaa', sans-serif" fontWeight="800" textTransform="uppercase" textAlign="center" color="var(--sw-fg-subtle)">
-              {t("timePicker.seconds")}
-            </Text>
-          </HStack>
+          <div className="flex justify-around px-4 py-2 border-b border-black/5 dark:border-white/5">
+            <span className="flex-1 text-[10px] font-bold text-center uppercase tracking-widest text-gray-500">{t("timePicker.hours")}</span>
+            <span className="w-6" />
+            <span className="flex-1 text-[10px] font-bold text-center uppercase tracking-widest text-gray-500">{t("timePicker.minutes")}</span>
+            <span className="w-6" />
+            <span className="flex-1 text-[10px] font-bold text-center uppercase tracking-widest text-gray-500">{t("timePicker.seconds")}</span>
+          </div>
 
           {/* Columns */}
-          <HStack gap={0} align="stretch" position="relative" px={1} py={2}>
-            {/* Center highlight band */}
-            <Box
-              position="absolute"
-              top="50%"
-              left="8px"
-              right="8px"
-              h={`${ITEM_H}px`}
-              transform="translateY(-50%)"
-              border="2px solid var(--sw-purple-normal)"
-              borderRadius="var(--sw-radius)"
-              bg="var(--sw-purple-light)"
-              opacity={0.3}
-              pointerEvents="none"
-            />
+          <div className="flex px-2 py-2 relative">
+            <div className="absolute top-1/2 left-2 right-2 h-[38px] -translate-y-1/2 bg-indigo-500/10 border-y border-indigo-500/30 pointer-events-none rounded" />
 
-            {/* Hours */}
-            <VStack gap={0} align="stretch" flex={1} position="relative">
-              <HStack gap={0}>
-                <button type="button" className="sw-timepicker-stepper" onClick={() => updateTime(clamp(h + 1, 23), m, s)}>
-                  <FiChevronUp size={12} />
-                </button>
-                <ScrollColumn items={hours} value={h} onSelect={(n) => updateTime(n, m, s)} />
-                <button type="button" className="sw-timepicker-stepper" onClick={() => updateTime(clamp(h - 1, 23), m, s)}>
-                  <FiChevronDown size={12} />
-                </button>
-              </HStack>
-            </VStack>
+            <div className="flex flex-col flex-1 relative items-center">
+              <button className="p-1 text-gray-400 hover:text-indigo-500" onClick={() => updateTime(clamp(h - 1, 23), m, s)}><FiChevronUp size={16} /></button>
+              <ScrollColumn items={hours} value={h} onSelect={(n) => updateTime(n, m, s)} />
+              <button className="p-1 text-gray-400 hover:text-indigo-500" onClick={() => updateTime(clamp(h + 1, 23), m, s)}><FiChevronDown size={16} /></button>
+            </div>
 
-            <Text fontSize="1.5rem" fontWeight="700" color="var(--sw-fg-subtle)" alignSelf="center">:</Text>
+            <span className="text-xl font-bold text-gray-300 self-center">:</span>
 
-            {/* Minutes */}
-            <VStack gap={0} align="stretch" flex={1} position="relative">
-              <HStack gap={0}>
-                <button type="button" className="sw-timepicker-stepper" onClick={() => updateTime(h, clamp(m + 1, 59), s)}>
-                  <FiChevronUp size={12} />
-                </button>
-                <ScrollColumn items={mins} value={m} onSelect={(n) => updateTime(h, n, s)} />
-                <button type="button" className="sw-timepicker-stepper" onClick={() => updateTime(h, clamp(m - 1, 59), s)}>
-                  <FiChevronDown size={12} />
-                </button>
-              </HStack>
-            </VStack>
+            <div className="flex flex-col flex-1 relative items-center">
+              <button className="p-1 text-gray-400 hover:text-indigo-500" onClick={() => updateTime(h, clamp(m - 1, 59), s)}><FiChevronUp size={16} /></button>
+              <ScrollColumn items={mins} value={m} onSelect={(n) => updateTime(h, n, s)} />
+              <button className="p-1 text-gray-400 hover:text-indigo-500" onClick={() => updateTime(h, clamp(m + 1, 59), s)}><FiChevronDown size={16} /></button>
+            </div>
 
-            <Text fontSize="1.5rem" fontWeight="700" color="var(--sw-fg-subtle)" alignSelf="center">:</Text>
+            <span className="text-xl font-bold text-gray-300 self-center">:</span>
 
-            {/* Seconds */}
-            <VStack gap={0} align="stretch" flex={1} position="relative">
-              <HStack gap={0}>
-                <button type="button" className="sw-timepicker-stepper" onClick={() => updateTime(h, m, clamp(s + 1, 59))}>
-                  <FiChevronUp size={12} />
-                </button>
-                <ScrollColumn items={secs} value={s} onSelect={(n) => updateTime(h, m, n)} />
-                <button type="button" className="sw-timepicker-stepper" onClick={() => updateTime(h, m, clamp(s - 1, 59))}>
-                  <FiChevronDown size={12} />
-                </button>
-              </HStack>
-            </VStack>
-          </HStack>
-
+            <div className="flex flex-col flex-1 relative items-center">
+              <button className="p-1 text-gray-400 hover:text-indigo-500" onClick={() => updateTime(h, m, clamp(s - 1, 59))}><FiChevronUp size={16} /></button>
+              <ScrollColumn items={secs} value={s} onSelect={(n) => updateTime(h, m, n)} />
+              <button className="p-1 text-gray-400 hover:text-indigo-500" onClick={() => updateTime(h, m, clamp(s + 1, 59))}><FiChevronDown size={16} /></button>
+            </div>
+          </div>
 
           {/* Footer */}
-          <HStack gap={2} p={2} borderTop="1px solid var(--sw-border-color)" bg="var(--sw-bg-muted)" justify="flex-end">
-            <button
-              type="button"
-              className="sw-timepicker-preset"
-              onClick={() => {
-                const now = new Date();
-                updateTime(now.getHours(), now.getMinutes(), now.getSeconds());
-              }}
-            >
+          <div className="flex justify-end gap-2 p-3 bg-black/5 dark:bg-white/5 border-t border-black/5 dark:border-white/5">
+            <button className="px-4 py-1.5 rounded-lg text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-black/10 dark:hover:bg-white/10" onClick={() => {
+              const now = new Date();
+              updateTime(now.getHours(), now.getMinutes(), now.getSeconds());
+            }}>
               {t("common.now")}
             </button>
-            <button
-              type="button"
-              className="sw-timepicker-done"
-              onClick={() => setOpen(false)}
-            >
+            <button className="px-4 py-1.5 rounded-lg text-xs font-bold bg-indigo-500 text-white hover:bg-indigo-600 shadow-md shadow-indigo-500/30" onClick={() => setOpen(false)}>
               {t("common.ok")}
             </button>
-          </HStack>
-        </Box>
+          </div>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }

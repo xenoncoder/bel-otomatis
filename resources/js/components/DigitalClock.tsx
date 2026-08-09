@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Box, HStack, Text, VStack } from "@chakra-ui/react";
 import { FiClock } from "react-icons/fi";
 import { useLang } from "@/lib/i18n";
 import { useTimeFormat } from "@/lib/time-format";
+import { GlassBadge } from "./ui/GlassComponents";
 
 const TZ = "Asia/Jakarta";
 
@@ -21,40 +21,26 @@ export default function DigitalClock() {
   const date = now.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: TZ });
 
   return (
-    <VStack gap={4} align="center" position="relative">
+    <div className="flex flex-col items-center gap-4 relative">
       {/* Time */}
-      <Text
-        fontSize={{ base: "6xl", md: "8xl", lg: "9xl" }}
-        fontWeight="700"
-        fontFamily="'IBM Plex Mono', monospace"
-        letterSpacing="-0.05em"
-        color="var(--sw-purple-normal)"
-        lineHeight={1}
-        textShadow="0.1rem 0.1rem 0 var(--sw-shadow-color)"
-      >
+      <p className="text-5xl md:text-8xl lg:text-9xl font-black font-body tracking-tighter text-indigo-600 dark:text-indigo-400 leading-none drop-shadow-sm">
         {time}
-      </Text>
+      </p>
 
       {/* Date + icon */}
-      <HStack gap={2} alignItems="center">
-        <FiClock size={16} color="var(--sw-fg-subtle)" />
-        <Text
-          fontSize={{ base: "md", md: "lg" }}
-          color="var(--sw-fg-muted)"
-          textTransform="capitalize"
-          fontFamily="'IBM Plex Mono', monospace"
-          fontWeight="500"
-        >
+      <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-white/10 shadow-inner">
+        <FiClock size={16} className="text-gray-500 shrink-0" />
+        <p className="text-sm md:text-base font-bold font-body text-gray-600 dark:text-gray-400 capitalize">
           {date}
-        </Text>
-      </HStack>
+        </p>
+      </div>
 
       {/* Dots accent */}
-      <HStack gap={1.5} mt={1}>
-        <Box w={1.5} h={1.5} borderRadius="full" bg="var(--sw-purple-normal)" />
-        <Box w={1.5} h={1.5} borderRadius="full" bg="var(--sw-green-normal)" />
-        <Box w={1.5} h={1.5} borderRadius="full" bg="var(--sw-pink-normal)" />
-      </HStack>
-    </VStack>
+      <div className="flex gap-2 mt-2">
+        <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-lg shadow-indigo-500/50" />
+        <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50" />
+        <div className="w-2 h-2 rounded-full bg-rose-500 shadow-lg shadow-rose-500/50" />
+      </div>
+    </div>
   );
 }

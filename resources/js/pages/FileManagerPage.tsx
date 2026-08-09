@@ -1,16 +1,13 @@
 import { useCallback, useEffect, useState, useMemo } from "react";
 import { fileApi, type FileItem } from "@/lib/api";
 import { useT, useLang } from "@/lib/i18n";
-import { toaster } from "@/lib/toaster";
-import {
-  Box, Button, Dialog, Flex, HStack, Heading, IconButton, Input, SimpleGrid, Spinner, Text, VStack, Table, Badge,
-} from "@chakra-ui/react";
+import { useToast } from "@/components/ui/ToastProvider";
 import {
   FiFolder, FiFile, FiTrash2, FiEdit2, FiUploadCloud, FiFolderPlus, FiChevronRight, FiChevronLeft, FiMusic,
-  FiAlertTriangle, FiGrid, FiList, FiLink, FiChevronUp, FiChevronDown, FiArrowUp, FiArrowDown,
+  FiAlertTriangle, FiGrid, FiList, FiLink, FiChevronUp, FiChevronDown
 } from "react-icons/fi";
-import CloseButton from "@/components/CloseButton";
-import BackgroundOrnament from "@/components/BackgroundOrnament";
+import { GlassCard, GlassButton, GlassInput, GlassBadge } from "@/components/ui/GlassComponents";
+import { GlassModal } from "@/components/ui/GlassModal";
 
 function formatSize(bytes: number) {
   if (!bytes) return "-";
@@ -39,6 +36,7 @@ export default function FileManagerPage() {
   const [uploading, setUploading] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [isDragging, setIsDragging] = useState(false);
+  const { toast } = useToast();
 
   const [sortCol, setSortCol] = useState<"name" | "size" | "modified">("name");
   const [sortDesc, setSortDesc] = useState(false);
@@ -74,18 +72,16 @@ export default function FileManagerPage() {
     if (sortCol === col) setSortDesc(!sortDesc);
     else { setSortCol(col); setSortDesc(false); }
   };
-  
+
   const SortIcon = ({ col }: { col: "name" | "size" | "modified" }) => {
     if (sortCol !== col) return null;
-    return sortDesc ? <FiChevronDown style={{display:"inline"}} /> : <FiChevronUp style={{display:"inline"}} />;
+    return sortDesc ? <FiChevronDown className="inline" /> : <FiChevronUp className="inline" />;
   };
-
 
   const [folderOpen, setFolderOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState<FileItem | null>(null);
   const [folderName, setFolderName] = useState("");
   const [renameName, setRenameName] = useState("");
-
   const [deleteTarget, setDeleteTarget] = useState<FileItem | null>(null);
 
   const [urlOpen, setUrlOpen] = useState(false);
@@ -100,7 +96,7 @@ export default function FileManagerPage() {
       setItems(res.items);
       setDir(res.dir);
     } catch (e) {
-      toaster.create({ title: (e as Error).message, type: "error" });
+      toast({ title: (e as Error).message, type: "error" });
     } finally {
       setLoading(false);
     }
@@ -120,66 +116,50 @@ export default function FileManagerPage() {
       for (const f of Array.from(files)) {
         await fileApi.upload(f, dir || undefined);
       }
-      toaster.create({ title: t("files.uploaded", { count: files.length }), type: "success" });
+      toast({ title: t("files.uploaded", { count: files.length }), type: "success" });
       await load(dir);
     } catch (e) {
-      toaster.create({ title: (e as Error).message, type: "error" });
+      toast({ title: (e as Error).message, type: "error" });
     } finally {
       setUploading(false);
     }
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      await processFiles(e.target.files);
-    }
+    if (e.target.files) await processFiles(e.target.files);
     e.target.value = "";
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setIsDragging(false);
-    }
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragging(false);
   };
-
   const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      await processFiles(e.dataTransfer.files);
-    }
+    e.preventDefault(); setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) await processFiles(e.dataTransfer.files);
   };
 
   const handleCreateFolder = async () => {
     if (!folderName.trim()) return;
     try {
       await fileApi.createFolder(folderName.trim(), dir || undefined);
-      toaster.create({ title: t("files.folderCreated"), type: "success" });
+      toast({ title: t("files.folderCreated"), type: "success" });
       setFolderName("");
       setFolderOpen(false);
       await load(dir);
-    } catch (e) {
-      toaster.create({ title: (e as Error).message, type: "error" });
-    }
+    } catch (e) { toast({ title: (e as Error).message, type: "error" }); }
   };
 
   const handleRename = async () => {
     if (!renameTarget || !renameName.trim()) return;
     try {
       await fileApi.rename(renameTarget.path, renameName.trim());
-      toaster.create({ title: t("files.renamed"), type: "success" });
+      toast({ title: t("files.renamed"), type: "success" });
       setRenameTarget(null);
       setRenameName("");
       await load(dir);
-    } catch (e) {
-      toaster.create({ title: (e as Error).message, type: "error" });
-    }
+    } catch (e) { toast({ title: (e as Error).message, type: "error" }); }
   };
 
   const handleUploadUrl = async () => {
@@ -187,28 +167,21 @@ export default function FileManagerPage() {
     setUrlUploading(true);
     try {
       await fileApi.uploadFromUrl(urlValue.trim(), dir || undefined, urlName.trim() || undefined);
-      toaster.create({ title: t("files.urlDownloaded"), type: "success" });
-      setUrlValue("");
-      setUrlName("");
-      setUrlOpen(false);
+      toast({ title: t("files.urlDownloaded"), type: "success" });
+      setUrlValue(""); setUrlName(""); setUrlOpen(false);
       await load(dir);
-    } catch (e) {
-      toaster.create({ title: (e as Error).message, type: "error" });
-    } finally {
-      setUrlUploading(false);
-    }
+    } catch (e) { toast({ title: (e as Error).message, type: "error" });
+    } finally { setUrlUploading(false); }
   };
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     try {
       await fileApi.delete(deleteTarget.path);
-      toaster.create({ title: t("files.deleted"), type: "success" });
+      toast({ title: t("files.deleted"), type: "success" });
       setDeleteTarget(null);
       await load(dir);
-    } catch (e) {
-      toaster.create({ title: (e as Error).message, type: "error" });
-    }
+    } catch (e) { toast({ title: (e as Error).message, type: "error" }); }
   };
 
   const startRename = (item: FileItem) => {
@@ -217,83 +190,77 @@ export default function FileManagerPage() {
   };
 
   const iconFor = (item: FileItem) => {
-    if (item.is_dir) return <FiFolder size={18} color="#ffffff" fill="#ffffff" fillOpacity={0.3} />;
-    if (isAudio(item.mime, item.name)) return <FiMusic size={18} color="#ffffff" fill="#ffffff" fillOpacity={0.3} />;
-    return <FiFile size={18} color="#ffffff" />;
+    if (item.is_dir) return <FiFolder size={20} className="fill-current text-white/50" />;
+    if (isAudio(item.mime, item.name)) return <FiMusic size={20} className="fill-current text-white/50" />;
+    return <FiFile size={20} className="text-white" />;
   };
 
-  const bgFor = (item: FileItem) =>
-    item.is_dir || isAudio(item.mime, item.name) ? "var(--sw-purple-normal)" : "var(--sw-pink-normal)";
-
   return (
-    <Box position="relative">
-      <BackgroundOrnament variant="normal" />
-      <VStack gap={6} align="stretch" position="relative" zIndex={1}>
-      <Heading size={{ base: "xl", md: "2xl" }} fontFamily="'Comfortaa', sans-serif" fontWeight="300" color="var(--sw-fg-heading)">
-        {t("files.title")}
-      </Heading>
+    <div className="relative max-w-7xl mx-auto flex flex-col gap-6">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl shadow-purple-500/20">
+            <FiFolder size={28} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl md:text-4xl font-heading font-black text-gray-800 dark:text-gray-100">
+              {t("files.title")}
+            </h1>
+          </div>
+        </div>
+      </div>
 
-      <Box 
-        className="sw-card" 
-        borderRadius="var(--sw-radius)" 
-        position="relative"
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
+      <GlassCard 
+        className="!p-0 overflow-hidden flex flex-col min-h-[500px]"
       >
-        {isDragging && (
-          <Flex position="absolute" inset={0} bg="rgba(0,0,0,0.7)" backdropFilter="blur(3px)" zIndex={10} align="center" justify="center" borderRadius="inherit" border="4px dashed var(--sw-green-normal)">
-            <VStack color="white">
-              <FiUploadCloud size={64} color="var(--sw-green-normal)" />
-              <Heading size="md" fontFamily="'Comfortaa', sans-serif" fontWeight="800">Lepaskan file di sini</Heading>
-              <Text fontSize="sm" fontFamily="'IBM Plex Mono', monospace">File akan otomatis diunggah</Text>
-            </VStack>
-          </Flex>
-        )}
-        <Box className="sw-card-header sw-card-header-green">
-          <Flex justify="space-between" align="center">
-            <Heading size="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="800">{t("files.manage")}</Heading>
-            <Text fontSize="2xs" color="var(--sw-fg)" fontFamily="'IBM Plex Mono', monospace" opacity={0.6}>
+        <div 
+          className="relative flex-1 flex flex-col"
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          {isDragging && (
+            <div className="absolute inset-0 z-50 bg-black/70 backdrop-blur-sm border-4 border-dashed border-emerald-500 rounded-xl flex items-center justify-center">
+              <div className="text-white text-center flex flex-col items-center">
+                <FiUploadCloud size={64} className="text-emerald-500 mb-4" />
+                <h3 className="font-heading font-black text-2xl">Lepaskan file di sini</h3>
+                <p className="font-body font-bold text-gray-300">File akan otomatis diunggah</p>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-emerald-500/10 border-b border-emerald-500/20 px-6 py-4 flex justify-between items-center">
+            <h2 className="font-heading font-bold text-lg text-emerald-800 dark:text-emerald-300">
+              {t("files.manage")}
+            </h2>
+            <span className="text-xs font-bold font-body text-gray-500 uppercase tracking-wider">
               {items.length} {t("common.item")}
-            </Text>
-          </Flex>
-        </Box>
-        <Box className="sw-card-body" p={{ base: 3, md: 6 }}>
-          <Box mb={4} p={3} borderRadius="var(--sw-radius)" bg="var(--sw-bg-muted)" border="1px solid var(--sw-border-color)">
-            <HStack gap={2} align="start">
-              <FiMusic color="var(--sw-purple-normal)" size={18} style={{ flexShrink: 0, marginTop: 2 }} />
-              <Text fontSize="xs" color="var(--sw-fg-muted)" fontFamily="'IBM Plex Mono', monospace">
-                {t("files.info")}
-              </Text>
-            </HStack>
-          </Box>
+            </span>
+          </div>
 
-          {/* Toolbar */}
-          <Flex direction={{ base: "column", sm: "row" }} justify="space-between" align={{ base: "stretch", sm: "center" }} mb={5} gap={3}>
-            {/* Breadcrumbs */}
-            <HStack gap={1} fontSize="sm" wrap="wrap" maxW={{ base: "100%", md: "50%" }} overflowX="auto"
-              css={{ "&::-webkit-scrollbar": { display: "none" }, scrollbarWidth: "none" }}
-            >
-              <Button variant="ghost" size="xs" onClick={() => load("")} fontFamily="'IBM Plex Mono', monospace" flexShrink={0} color="var(--sw-purple-normal)">
-                <FiFolder fill="var(--sw-purple-normal)" fillOpacity={0.2} /> {t("common.rootFolder")}
-              </Button>
-              {breadcrumbs.map((b, i) => (
-                <HStack key={i} gap={1} flexShrink={0}>
-                  <FiChevronRight color="var(--sw-fg-subtle)" />
-                  <Button variant="ghost" size="xs" onClick={() => goTo(i)} fontFamily="'IBM Plex Mono', monospace">
-                    {b}
-                  </Button>
-                </HStack>
-              ))}
-            </HStack>
+          <div className="p-4 md:p-6 bg-black/5 dark:bg-white/5 flex-1 flex flex-col gap-6">
+            
+            {/* Toolbar */}
+            <div className="flex flex-col md:flex-row justify-between gap-4">
+              {/* Breadcrumbs */}
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-1">
+                <button onClick={() => load("")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold text-indigo-600 hover:bg-indigo-500/10 transition-colors whitespace-nowrap">
+                  <FiFolder className="fill-indigo-600/30" /> {t("common.rootFolder")}
+                </button>
+                {breadcrumbs.map((b, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <FiChevronRight className="text-gray-400" />
+                    <button onClick={() => goTo(i)} className="px-3 py-1.5 rounded-lg text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-black/10 dark:hover:bg-white/10 transition-colors whitespace-nowrap">
+                      {b}
+                    </button>
+                  </div>
+                ))}
+              </div>
 
-            {/* Actions + view toggle */}
-            <HStack gap={2} wrap="wrap" align="center" w={{ base: "full", sm: "auto" }}>
-              
-              {/* Sort Selector */}
-              <Box>
+              {/* Actions */}
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 md:pb-0">
                 <select 
-                  className="sw-select-sm"
+                  className="px-3 py-1.5 rounded-lg bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/10 text-sm font-bold text-gray-700 dark:text-gray-300 outline-none hover:border-indigo-500/50 cursor-pointer"
                   value={`${sortCol}-${sortDesc}`}
                   onChange={(e) => {
                     const [c, d] = e.target.value.split("-");
@@ -308,429 +275,216 @@ export default function FileManagerPage() {
                   <option value="modified-false">Date (Old-New)</option>
                   <option value="modified-true">Date (New-Old)</option>
                 </select>
-              </Box>
 
-              {/* View toggle */}
-              <HStack gap={0.5} p={0.5} borderRadius="var(--sw-radius)" border="1px solid var(--sw-border-color)" bg="var(--sw-bg-panel)">
-                <IconButton
-                  aria-label={t("files.gridView")}
-                  size="2xs"
-                  variant="ghost"
-                  onClick={() => setViewMode("grid")}
-                  bg={viewMode === "grid" ? "var(--sw-purple-normal)" : "transparent"}
-                  color={viewMode === "grid" ? "#ffffff" : "var(--sw-fg)"}
-                  borderRadius="var(--sw-radius)"
-                  _hover={{ bg: viewMode === "grid" ? "var(--sw-purple-dark)" : "var(--sw-bg-hover)" }}
-                >
-                  <FiGrid size={13} />
-                </IconButton>
-                <IconButton
-                  aria-label={t("files.listView")}
-                  size="2xs"
-                  variant="ghost"
-                  onClick={() => setViewMode("list")}
-                  bg={viewMode === "list" ? "var(--sw-purple-normal)" : "transparent"}
-                  color={viewMode === "list" ? "#ffffff" : "var(--sw-fg)"}
-                  borderRadius="var(--sw-radius)"
-                  _hover={{ bg: viewMode === "list" ? "var(--sw-purple-dark)" : "var(--sw-bg-hover)" }}
-                >
-                  <FiList size={13} />
-                </IconButton>
-              </HStack>
+                <div className="flex bg-white/50 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-lg p-0.5">
+                  <button onClick={() => setViewMode("grid")} className={`p-1.5 rounded-md transition-colors ${viewMode === "grid" ? "bg-indigo-500 text-white" : "text-gray-500 hover:text-indigo-500"}`}>
+                    <FiGrid size={14} />
+                  </button>
+                  <button onClick={() => setViewMode("list")} className={`p-1.5 rounded-md transition-colors ${viewMode === "list" ? "bg-indigo-500 text-white" : "text-gray-500 hover:text-indigo-500"}`}>
+                    <FiList size={14} />
+                  </button>
+                </div>
 
-              <button
-                type="button"
-                onClick={() => setFolderOpen(true)}
-                className="sw-btn-outline"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  padding: "0.375rem 1rem",
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontWeight: 600,
-                  fontSize: "0.875rem",
-                  background: "var(--sw-bg-panel)",
-                  color: "var(--sw-fg)",
-                  border: "1px solid var(--sw-border-color)",
-                  borderRadius: "var(--sw-radius)",
-                  boxShadow: "0.25rem 0.25rem 0 var(--sw-shadow-color)",
-                  cursor: "pointer",
-                  transition: "all 0.15s",
-                  userSelect: "none",
-                  height: "38px",
-                }}
-              >
-                <FiFolderPlus /> {t("files.folderNew")}
-              </button>
-              <button
-                type="button"
-                onClick={() => setUrlOpen(true)}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  padding: "0.375rem 1rem",
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontWeight: 600,
-                  fontSize: "0.875rem",
-                  background: "var(--sw-bg-panel)",
-                  color: "var(--sw-fg)",
-                  border: "1px solid var(--sw-border-color)",
-                  borderRadius: "var(--sw-radius)",
-                  boxShadow: "0.25rem 0.25rem 0 var(--sw-shadow-color)",
-                  cursor: "pointer",
-                  transition: "all 0.15s",
-                  userSelect: "none",
-                  height: "38px",
-                }}
-              >
-                <FiLink /> {t("files.uploadUrl")}
-              </button>
-              <Box
-                as="label"
-                display="inline-flex"
-                alignItems="center"
-                gap={2}
-                px={4}
-                h="38px"
-                fontSize="sm"
-                fontFamily="'IBM Plex Mono', monospace"
-                fontWeight="600"
-                bg="var(--sw-green-normal)"
-                color="#ffffff"
-                border="1px solid var(--sw-border-color)"
-                borderRadius="var(--sw-radius)"
-                boxShadow="0.2rem 0.2rem 0 var(--sw-shadow-color)"
-                cursor={uploading ? "wait" : "pointer"}
-                _hover={{ transform: "translate(-0.05rem, -0.05rem)", boxShadow: "0.25rem 0.25rem 0 var(--sw-shadow-color)" }}
-                _active={{ transform: "translate(0.1rem, 0.1rem)", boxShadow: "0.1rem 0.1rem 0 var(--sw-shadow-color)" }}
-                transition="box-shadow 0.1s, transform 0.2s"
-                opacity={uploading ? 0.5 : 1}
-                userSelect="none"
-              >
-                <FiUploadCloud /> {t("files.upload")}
-                <input type="file" multiple hidden onChange={handleUpload} accept="audio/*" />
-              </Box>
-            </HStack>
-          </Flex>
+                <GlassButton variant="primary" onClick={() => setFolderOpen(true)} className="!px-3 !py-1.5">
+                  <FiFolderPlus /> {t("files.folderNew")}
+                </GlassButton>
+                
+                <GlassButton variant="primary" onClick={() => setUrlOpen(true)} className="!px-3 !py-1.5">
+                  <FiLink /> URL
+                </GlassButton>
+                
+                <label className={`cursor-pointer px-3 py-1.5 rounded-lg text-sm font-bold bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm shadow-emerald-500/20 flex items-center gap-2 transition-all ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <FiUploadCloud /> {t("files.upload")}
+                  <input type="file" multiple hidden onChange={handleUpload} accept="audio/*" />
+                </label>
+              </div>
+            </div>
 
-          {loading ? (
-            <Flex justify="center" py={12}><Spinner size="xl" color="var(--sw-purple-normal)" /></Flex>
-          ) : items.length === 0 ? (
-            <Box textAlign="center" py={12} color="var(--sw-fg-subtle)">
-              <FiFolder size={40} style={{ margin: "0 auto", opacity: 0.4 }} />
-              <Text mt={2}>{t("files.folderEmpty")}</Text>
-            </Box>
-          ) : viewMode === "grid" ? (
-            /* === GRID VIEW === */
-            <SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap={4}>
-              {pagedItems.map((item) => (
-                <Box
-                  key={item.path}
-                  className="sw-card sw-card-hover"
-                  p={4}
-                  borderRadius="var(--sw-radius)"
-                  cursor={item.is_dir ? "pointer" : "default"}
-                  onClick={() => item.is_dir && openFolder(item)}
-                >
-                  <VStack gap={3} align="stretch">
-                    <Flex justify="space-between" align="start">
-                      <Box
-                        w={10} h={10}
-                        borderRadius="var(--sw-radius)"
-                        border="1px solid var(--sw-border-color)"
-                        bg={bgFor(item)}
-                        color="var(--sw-fg)"
-                        display="flex" alignItems="center" justifyContent="center"
-                        flexShrink={0}
-                      >
+            {loading ? (
+              <div className="flex-1 flex justify-center items-center py-20">
+                <div className="w-8 h-8 rounded-full border-4 border-indigo-500 border-t-transparent animate-spin"></div>
+              </div>
+            ) : items.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center gap-3 text-gray-500 py-20">
+                <FiFolder size={48} className="opacity-30" />
+                <p className="font-bold">{t("files.folderEmpty")}</p>
+              </div>
+            ) : viewMode === "grid" ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {pagedItems.map(item => (
+                  <div 
+                    key={item.path}
+                    onClick={() => item.is_dir && openFolder(item)}
+                    className={`bg-white/40 dark:bg-black/20 border border-white/20 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-3 transition-all hover:-translate-y-1 hover:shadow-lg ${item.is_dir ? "cursor-pointer hover:border-indigo-500/50" : ""}`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br ${item.is_dir || isAudio(item.mime, item.name) ? "from-indigo-500 to-purple-600" : "from-rose-400 to-pink-500"} shadow-md`}>
                         {iconFor(item)}
-                      </Box>
-                      <HStack gap={0.5}>
-                        <IconButton aria-label={t("files.rename")} size="2xs" variant="ghost" colorPalette="gray" onClick={(e) => { e.stopPropagation(); startRename(item); }}>
-                          <FiEdit2 />
-                        </IconButton>
-                        <IconButton aria-label={t("common.delete")} size="2xs" variant="ghost" colorPalette="red" onClick={(e) => { e.stopPropagation(); setDeleteTarget(item); }}>
-                          <FiTrash2 />
-                        </IconButton>
-                      </HStack>
-                    </Flex>
-                    <Text fontSize="sm" fontWeight="700" fontFamily="'Comfortaa', sans-serif" lineClamp={1} title={item.name}>
-                      {item.name}
-                    </Text>
-                    <Text fontSize="xs" color="var(--sw-fg-muted)" fontFamily="'IBM Plex Mono', monospace">
-                      {item.is_dir ? t("common.folder") : formatSize(item.size)}
-                    </Text>
+                      </div>
+                      <div className="flex gap-1">
+                        <button onClick={(e) => { e.stopPropagation(); startRename(item); }} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-indigo-500 hover:bg-white/50 transition-colors">
+                          <FiEdit2 size={14} />
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(item); }} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-rose-500 hover:bg-white/50 transition-colors">
+                          <FiTrash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="font-heading font-bold text-gray-800 dark:text-gray-100 truncate" title={item.name}>{item.name}</p>
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider font-body mt-0.5">
+                        {item.is_dir ? t("common.folder") : formatSize(item.size)}
+                      </p>
+                    </div>
                     {!item.is_dir && isAudio(item.mime, item.name) && item.url && (
-                      <audio controls src={item.url} style={{ width: "100%", height: 36 }} onClick={(e) => e.stopPropagation()} />
+                      <audio controls src={item.url} className="w-full h-8 mt-2" onClick={(e) => e.stopPropagation()} />
                     )}
-                  </VStack>
-                </Box>
-              ))}
-            </SimpleGrid>
-          ) : (
-            /* === LIST VIEW === */
-            <Box className="sw-table-container" overflowX="auto">
-              <Table.Root size="sm" variant="outline" className="sw-table-zebra sw-table-mobile">
-                <Table.Header>
-                  <Table.Row>
-                      <Table.ColumnHeader w="40px">{t("common.type")}</Table.ColumnHeader>
-                      <Table.ColumnHeader cursor="pointer" onClick={() => handleSort("name")} userSelect="none">
-                        <HStack gap={1}><Text>{t("common.name")}</Text><SortIcon col="name" /></HStack>
-                      </Table.ColumnHeader>
-                      <Table.ColumnHeader cursor="pointer" onClick={() => handleSort("size")} userSelect="none" whiteSpace="nowrap">
-                        <HStack gap={1}><Text>{t("common.size")}</Text><SortIcon col="size" /></HStack>
-                      </Table.ColumnHeader>
-                      <Table.ColumnHeader cursor="pointer" onClick={() => handleSort("modified")} userSelect="none" whiteSpace="nowrap">
-                        <HStack gap={1}><Text>{t("common.modified")}</Text><SortIcon col="modified" /></HStack>
-                      </Table.ColumnHeader>
-                      <Table.ColumnHeader>{t("common.audio")}</Table.ColumnHeader>
-                      <Table.ColumnHeader textAlign="center" w="80px">{t("common.action")}</Table.ColumnHeader>
-                    </Table.Row>
-                </Table.Header>
-                <Table.Body>
-                  {pagedItems.map((item) => (
-                    <Table.Row
-                      key={item.path}
-                      cursor={item.is_dir ? "pointer" : "default"}
-                      onClick={() => item.is_dir && openFolder(item)}
-                      _hover={{ bg: "var(--sw-purple-light)" }}
-                    >
-                      <Table.Cell data-label={t("common.type")}>
-                        <Box
-                          w={8} h={8}
-                          borderRadius="var(--sw-radius)"
-                          border="1px solid var(--sw-border-color)"
-                          bg={bgFor(item)}
-                          color="var(--sw-fg)"
-                          display="flex" alignItems="center" justifyContent="center"
-                        >
-                          {iconFor(item)}
-                        </Box>
-                      </Table.Cell>
-                      <Table.Cell data-label={t("common.name")}>
-                        <Text fontSize="sm" fontWeight="700" fontFamily="'Comfortaa', sans-serif" lineClamp={1} title={item.name}>
-                          {item.name}
-                        </Text>
-                        {item.is_dir && (
-                          <Badge colorPalette="green" variant="subtle" fontSize="2xs" mt={0.5}>{t("common.folder")}</Badge>
-                        )}
-                        {isAudio(item.mime, item.name) && !item.is_dir && (
-                          <Badge colorPalette="pink" variant="subtle" fontSize="2xs" mt={0.5}>{t("common.audio")}</Badge>
-                        )}
-                      </Table.Cell>
-                      <Table.Cell data-label={t("common.size")} fontSize="xs" fontFamily="'IBM Plex Mono', monospace" color="var(--sw-fg-muted)" whiteSpace="nowrap">
-                        {item.is_dir ? "-" : formatSize(item.size)}
-                      </Table.Cell>
-                      <Table.Cell data-label={t("common.modified")} fontSize="xs" fontFamily="'IBM Plex Mono', monospace" color="var(--sw-fg-subtle)" whiteSpace="nowrap">
-                        {formatDate(item.modified, locale)}
-                      </Table.Cell>
-                      <Table.Cell data-label={t("common.audio")}>
-                        {!item.is_dir && isAudio(item.mime, item.name) && item.url ? (
-                          <audio controls src={item.url} style={{ width: "180px", height: 32 }} onClick={(e) => e.stopPropagation()} />
-                        ) : (
-                          <Text fontSize="xs" color="var(--sw-fg-subtle)">-</Text>
-                        )}
-                      </Table.Cell>
-                      <Table.Cell data-label="" className="sw-table-actions">
-                        <HStack gap={1} justify="center" onClick={(e) => e.stopPropagation()}>
-                          <IconButton aria-label={t("files.rename")} size="xs" variant="ghost" colorPalette="blue" onClick={() => startRename(item)}>
-                            <FiEdit2 />
-                          </IconButton>
-                          <IconButton aria-label={t("common.delete")} size="xs" variant="ghost" colorPalette="red" onClick={() => setDeleteTarget(item)}>
-                            <FiTrash2 />
-                          </IconButton>
-                        </HStack>
-                      </Table.Cell>
-                    </Table.Row>
-                  ))}
-                </Table.Body>
-                {items.length > 0 && (
-                  <Table.Footer>
-                    <Table.Row>
-                      <Table.Cell colSpan={6}>{t("table.totalItems", { count: items.length })}</Table.Cell>
-                    </Table.Row>
-                  </Table.Footer>
-                )}
-              </Table.Root>
-            </Box>
-          )}
-        
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <Flex justify="space-between" align="center" mt={6} pt={4} borderTop="1px solid var(--sw-border-color)">
-              <Text fontSize="sm" fontFamily="'IBM Plex Mono', monospace" color="var(--sw-fg-subtle)">
-                {t("table.page" as any) || "Page"} {page} {t("table.of" as any) || "of"} {totalPages}
-              </Text>
-              <HStack gap={2}>
-                <Button size="sm" variant="outline" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
-                  <FiChevronLeft />
-                </Button>
-                <Button size="sm" variant="outline" disabled={page === totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>
-                  <FiChevronRight />
-                </Button>
-              </HStack>
-            </Flex>
-          )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/10">
+                      <th className="py-3 px-4 font-bold text-sm text-gray-500 uppercase tracking-widest">{t("common.type")}</th>
+                      <th className="py-3 px-4 font-bold text-sm text-gray-500 uppercase tracking-widest cursor-pointer hover:text-indigo-500" onClick={() => handleSort("name")}>
+                        {t("common.name")} <SortIcon col="name" />
+                      </th>
+                      <th className="py-3 px-4 font-bold text-sm text-gray-500 uppercase tracking-widest cursor-pointer hover:text-indigo-500" onClick={() => handleSort("size")}>
+                        {t("common.size")} <SortIcon col="size" />
+                      </th>
+                      <th className="py-3 px-4 font-bold text-sm text-gray-500 uppercase tracking-widest cursor-pointer hover:text-indigo-500" onClick={() => handleSort("modified")}>
+                        {t("common.modified")} <SortIcon col="modified" />
+                      </th>
+                      <th className="py-3 px-4 font-bold text-sm text-gray-500 uppercase tracking-widest">{t("common.audio")}</th>
+                      <th className="py-3 px-4 font-bold text-sm text-gray-500 uppercase tracking-widest text-center">{t("common.action")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pagedItems.map(item => (
+                      <tr key={item.path} onClick={() => item.is_dir && openFolder(item)} className={`border-b border-white/5 hover:bg-white/20 dark:hover:bg-white/5 transition-colors ${item.is_dir ? "cursor-pointer" : ""}`}>
+                        <td className="py-3 px-4">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br ${item.is_dir || isAudio(item.mime, item.name) ? "from-indigo-500 to-purple-600" : "from-rose-400 to-pink-500"}`}>
+                            {iconFor(item)}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <p className="font-heading font-bold text-gray-800 dark:text-gray-100 truncate max-w-[200px]" title={item.name}>{item.name}</p>
+                          {item.is_dir && <GlassBadge color="green" className="!px-1.5 !py-0 !text-[10px] mt-1">{t("common.folder")}</GlassBadge>}
+                        </td>
+                        <td className="py-3 px-4 font-body font-bold text-xs text-gray-500">
+                          {item.is_dir ? "-" : formatSize(item.size)}
+                        </td>
+                        <td className="py-3 px-4 font-body font-bold text-xs text-gray-500 whitespace-nowrap">
+                          {formatDate(item.modified, locale)}
+                        </td>
+                        <td className="py-3 px-4">
+                          {!item.is_dir && isAudio(item.mime, item.name) && item.url ? (
+                            <audio controls src={item.url} className="w-[180px] h-8" onClick={(e) => e.stopPropagation()} />
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex justify-center gap-1">
+                            <button onClick={(e) => { e.stopPropagation(); startRename(item); }} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-indigo-500 hover:bg-white/50 transition-colors">
+                              <FiEdit2 size={14} />
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(item); }} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-rose-500 hover:bg-white/50 transition-colors">
+                              <FiTrash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-        </Box>
-      </Box>
+            {totalPages > 1 && (
+              <div className="flex justify-between items-center mt-4 pt-4 border-t border-white/10">
+                <span className="text-sm font-bold text-gray-500">
+                  Page {page} of {totalPages}
+                </span>
+                <div className="flex gap-2">
+                  <GlassButton variant="ghost" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="!px-3 !py-1">
+                    <FiChevronLeft />
+                  </GlassButton>
+                  <GlassButton variant="ghost" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="!px-3 !py-1">
+                    <FiChevronRight />
+                  </GlassButton>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </GlassCard>
 
       {/* Dialog: Folder Baru */}
-      <Dialog.Root open={folderOpen} onOpenChange={(e) => setFolderOpen(e.open)} placement="center">
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
-          <Dialog.Content maxW={{ base: "calc(100vw - 2rem)", sm: "400px" }}>
-            <Box className="sw-dialog-strip sw-dialog-strip-green" />
-            <Dialog.Header>
-              <Dialog.Title>{t("files.folderNew")}</Dialog.Title>
-              <Dialog.CloseTrigger asChild>
-                <CloseButton />
-              </Dialog.CloseTrigger>
-            </Dialog.Header>
-            <Dialog.Body>
-              <Input
-                placeholder={t("files.folderNamePlaceholder")}
-                value={folderName}
-                onChange={(e) => setFolderName(e.target.value)}
-                autoFocus
-                border="1px solid var(--sw-border-color)"
-                borderRadius="var(--sw-radius)"
-                bg="var(--sw-bg-panel)"
-              />
-            </Dialog.Body>
-            <Dialog.Footer>
-              <Button className="sw-btn sw-btn-success" size="sm" variant="ghost" onClick={handleCreateFolder}>{t("files.create")}</Button>
-            </Dialog.Footer>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Dialog.Root>
+      <GlassModal isOpen={folderOpen} onClose={() => setFolderOpen(false)} title={t("files.folderNew")} footer={
+        <>
+          <GlassButton variant="ghost" onClick={() => setFolderOpen(false)}>{t("common.cancel")}</GlassButton>
+          <GlassButton variant="success" onClick={handleCreateFolder}>{t("files.create")}</GlassButton>
+        </>
+      }>
+        <GlassInput 
+          placeholder={t("files.folderNamePlaceholder")} 
+          value={folderName} 
+          onChange={(e: any) => setFolderName(e.target.value)} 
+          autoFocus 
+        />
+      </GlassModal>
 
       {/* Dialog: Upload dari URL */}
-      <Dialog.Root open={urlOpen} onOpenChange={(e) => setUrlOpen(e.open)} placement="center">
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
-          <Dialog.Content maxW={{ base: "calc(100vw - 2rem)", sm: "480px" }}>
-            <Box className="sw-dialog-strip sw-dialog-strip-purple" />
-            <Dialog.Header>
-              <Dialog.Title>{t("files.urlDialogTitle")}</Dialog.Title>
-              <Dialog.CloseTrigger asChild>
-                <CloseButton />
-              </Dialog.CloseTrigger>
-            </Dialog.Header>
-            <Dialog.Body>
-              <VStack gap={3} align="stretch">
-                <Box>
-                  <Text fontSize="xs" fontFamily="'IBM Plex Mono', monospace" color="var(--sw-fg-muted)" mb={1}>
-                    {t("files.urlLabel")}
-                  </Text>
-                  <Input
-                    placeholder={t("files.urlPlaceholder")}
-                    value={urlValue}
-                    onChange={(e) => setUrlValue(e.target.value)}
-                    autoFocus
-                    border="1px solid var(--sw-border-color)"
-                    borderRadius="var(--sw-radius)"
-                    bg="var(--sw-bg-panel)"
-                  />
-                </Box>
-                <Box>
-                  <Text fontSize="xs" fontFamily="'IBM Plex Mono', monospace" color="var(--sw-fg-muted)" mb={1}>
-                    {t("files.nameLabel")}
-                  </Text>
-                  <Input
-                    placeholder={t("files.namePlaceholder")}
-                    value={urlName}
-                    onChange={(e) => setUrlName(e.target.value)}
-                    border="1px solid var(--sw-border-color)"
-                    borderRadius="var(--sw-radius)"
-                    bg="var(--sw-bg-panel)"
-                  />
-                </Box>
-                <HStack gap={2} p={2} borderRadius="var(--sw-radius)" bg="var(--sw-bg-muted)" border="1px solid var(--sw-border-color)">
-                  <FiLink color="var(--sw-purple-normal)" size={14} style={{ flexShrink: 0 }} />
-                  <Text fontSize="2xs" fontFamily="'IBM Plex Mono', monospace" color="var(--sw-fg-muted)">
-                    {t("files.urlHint")}
-                  </Text>
-                </HStack>
-              </VStack>
-            </Dialog.Body>
-            <Dialog.Footer>
-              <Button className="sw-btn sw-btn-primary" size="sm" variant="ghost" onClick={handleUploadUrl} loading={urlUploading}>
-                <FiUploadCloud /> {t("files.downloadSave")}
-              </Button>
-            </Dialog.Footer>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Dialog.Root>
+      <GlassModal isOpen={urlOpen} onClose={() => setUrlOpen(false)} title={t("files.urlDialogTitle")} footer={
+        <>
+          <GlassButton variant="ghost" onClick={() => setUrlOpen(false)}>{t("common.cancel")}</GlassButton>
+          <GlassButton variant="primary" onClick={handleUploadUrl} disabled={urlUploading}>
+            <FiUploadCloud /> {t("files.downloadSave")}
+          </GlassButton>
+        </>
+      }>
+        <div className="flex flex-col gap-4">
+          <div>
+            <p className="text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">{t("files.urlLabel")}</p>
+            <GlassInput placeholder={t("files.urlPlaceholder")} value={urlValue} onChange={(e: any) => setUrlValue(e.target.value)} autoFocus />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-gray-500 mb-1 ml-1 uppercase">{t("files.nameLabel")}</p>
+            <GlassInput placeholder={t("files.namePlaceholder")} value={urlName} onChange={(e: any) => setUrlName(e.target.value)} />
+          </div>
+        </div>
+      </GlassModal>
 
       {/* Dialog: Rename */}
-      <Dialog.Root open={!!renameTarget} onOpenChange={(e) => !e.open && setRenameTarget(null)} placement="center">
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
-          <Dialog.Content maxW={{ base: "calc(100vw - 2rem)", sm: "400px" }}>
-            <Box className="sw-dialog-strip sw-dialog-strip-blue" />
-            <Dialog.Header>
-              <Dialog.Title>{t("files.renameTitle")}</Dialog.Title>
-              <Dialog.CloseTrigger asChild>
-                <CloseButton />
-              </Dialog.CloseTrigger>
-            </Dialog.Header>
-            <Dialog.Body>
-              <Input
-                value={renameName}
-                onChange={(e) => setRenameName(e.target.value)}
-                autoFocus
-                border="1px solid var(--sw-border-color)"
-                borderRadius="var(--sw-radius)"
-                bg="var(--sw-bg-panel)"
-              />
-            </Dialog.Body>
-            <Dialog.Footer>
-              <Button className="sw-btn sw-btn-success" size="sm" variant="ghost" onClick={handleRename}>{t("common.save")}</Button>
-            </Dialog.Footer>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Dialog.Root>
+      <GlassModal isOpen={!!renameTarget} onClose={() => setRenameTarget(null)} title={t("files.renameTitle")} footer={
+        <>
+          <GlassButton variant="ghost" onClick={() => setRenameTarget(null)}>{t("common.cancel")}</GlassButton>
+          <GlassButton variant="success" onClick={handleRename}>{t("common.save")}</GlassButton>
+        </>
+      }>
+        <GlassInput value={renameName} onChange={(e: any) => setRenameName(e.target.value)} autoFocus />
+      </GlassModal>
 
       {/* Dialog: Delete confirmation */}
-      <Dialog.Root open={!!deleteTarget} onOpenChange={(e) => !e.open && setDeleteTarget(null)} placement="center">
-        <Dialog.Backdrop />
-        <Dialog.Positioner>
-          <Dialog.Content maxW={{ base: "calc(100vw - 2rem)", sm: "400px" }}>
-            <Box className="sw-dialog-strip sw-dialog-strip-pink" />
-            <Dialog.Header>
-              <Dialog.Title>{t("files.deleteTitle", { type: deleteTarget?.is_dir ? t("common.folder") : t("common.file") })}</Dialog.Title>
-            </Dialog.Header>
-            <Dialog.Body>
-              <HStack gap={3} align="start">
-                <Box
-                  w={10} h={10}
-                  borderRadius="var(--sw-radius)"
-                  bg="var(--sw-pink-light)"
-                  border="1px solid var(--sw-pink-dark)"
-                  display="flex" alignItems="center" justifyContent="center"
-                  flexShrink={0}
-                >
-                  <FiAlertTriangle size={18} color="#ba797f" />
-                </Box>
-                <Text fontSize="sm" color="var(--sw-fg-muted)">
-                  {t("files.deleteConfirm", { name: deleteTarget?.name ?? "" })}
-                  {deleteTarget?.is_dir && <> {t("files.deleteFolderWarning")}</>}
-                </Text>
-              </HStack>
-            </Dialog.Body>
-            <Dialog.Footer>
-              <Button className="sw-btn" size="sm" variant="ghost" onClick={() => setDeleteTarget(null)}>{t("common.cancel")}</Button>
-              <Button className="sw-btn sw-btn-danger" size="sm" variant="ghost" onClick={confirmDelete}>
-                <Box as={FiTrash2} /> {t("common.delete")}
-              </Button>
-            </Dialog.Footer>
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Dialog.Root>
-    </VStack>
-    </Box>
+      <GlassModal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} title={t("files.deleteTitle", { type: deleteTarget?.is_dir ? t("common.folder") : t("common.file") })} footer={
+        <>
+          <GlassButton variant="ghost" onClick={() => setDeleteTarget(null)}>{t("common.cancel")}</GlassButton>
+          <GlassButton variant="danger" onClick={confirmDelete}><FiTrash2 /> {t("common.delete")}</GlassButton>
+        </>
+      }>
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-500 flex items-center justify-center shrink-0">
+            <FiAlertTriangle size={24} />
+          </div>
+          <p className="font-bold text-gray-800 dark:text-gray-200 mt-2">
+            {t("files.deleteConfirm", { name: deleteTarget?.name ?? "" })}
+            {deleteTarget?.is_dir && <> {t("files.deleteFolderWarning")}</>}
+          </p>
+        </div>
+      </GlassModal>
+    </div>
   );
 }
