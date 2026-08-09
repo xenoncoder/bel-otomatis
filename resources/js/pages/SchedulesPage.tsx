@@ -129,6 +129,7 @@ export default function SchedulesPage() {
 
   // Edit state
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editForm, setEditForm] = useState<ScheduleForm | null>(null);
   const [editAdvanced, setEditAdvanced] = useState(false);
   const [isCopy, setIsCopy] = useState(false);
@@ -264,7 +265,8 @@ export default function SchedulesPage() {
           </Field.Root>
           <Field.Root flex={1} w={{ base: "full", sm: "auto" }} minW={0}>
             <Field.Label fontSize="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="700"
-                    flex={{ base: "1 1 auto", sm: "none" }}
+                    flexShrink={0}
+                    whiteSpace="nowrap"
                     justifyContent="center">{t("common.label")}</Field.Label>
             <Input
               placeholder={t("schedules.labelPlaceholder")}
@@ -363,7 +365,8 @@ export default function SchedulesPage() {
         <VStack gap={3} align="stretch">
             <Field.Root w={{ base: "full", sm: "350px" }}>
               <Field.Label fontSize="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="700"
-                    flex={{ base: "1 1 auto", sm: "none" }}
+                    flexShrink={0}
+                    whiteSpace="nowrap"
                     justifyContent="center">{t("schedules.bellSound")}</Field.Label>
               <HStack gap={2} w="full">
                 <Box flex={1}>
@@ -401,7 +404,8 @@ export default function SchedulesPage() {
 
           <Field.Root>
             <Field.Label fontSize="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="700"
-                    flex={{ base: "1 1 auto", sm: "none" }}
+                    flexShrink={0}
+                    whiteSpace="nowrap"
                     justifyContent="center">{t("schedules.playMode")}</Field.Label>
             <HStack gap={2} wrap="wrap">
               {[
@@ -438,7 +442,8 @@ export default function SchedulesPage() {
           {f.repeat_mode === "count" && (
             <Field.Root w="100px">
               <Field.Label fontSize="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="700"
-                    flex={{ base: "1 1 auto", sm: "none" }}
+                    flexShrink={0}
+                    whiteSpace="nowrap"
                     justifyContent="center">{t("schedules.repeatCount")}</Field.Label>
               <Input
                 type="number"
@@ -450,7 +455,8 @@ export default function SchedulesPage() {
                 textAlign="center"
                 fontFamily="'IBM Plex Mono', monospace"
                 fontWeight="700"
-                    flex={{ base: "1 1 auto", sm: "none" }}
+                    flexShrink={0}
+                    whiteSpace="nowrap"
                     justifyContent="center"
                 value={f.repeat_count}
                 onChange={(e) => setter("repeat_count", e.target.value)}
@@ -468,7 +474,8 @@ export default function SchedulesPage() {
           onClick={() => setAdvanced(!advanced)}
           fontFamily="'Comfortaa', sans-serif"
           fontWeight="700"
-                    flex={{ base: "1 1 auto", sm: "none" }}
+                    flexShrink={0}
+                    whiteSpace="nowrap"
                     justifyContent="center"
           color="var(--sw-fg-muted)"
         >
@@ -495,7 +502,8 @@ export default function SchedulesPage() {
                 </Field.Root>
                 <Field.Root>
                   <Field.Label fontSize="sm" fontFamily="'Comfortaa', sans-serif" fontWeight="700"
-                    flex={{ base: "1 1 auto", sm: "none" }}
+                    flexShrink={0}
+                    whiteSpace="nowrap"
                     justifyContent="center">{t("schedules.status")}</Field.Label>
                   <Switch.Root
                     checked={f.is_active}
@@ -572,13 +580,20 @@ export default function SchedulesPage() {
         <Box className="sw-card-body" p={{ base: 4, md: 6 }}>
           <Tabs.Root value={activeDay} onValueChange={(e) => setActiveDay(e.value)}>
             <Tabs.List
-                flexWrap="wrap"
+                display="flex"
+                flexWrap="nowrap"
+                overflowX="auto"
                 bg="var(--sw-bg-card)"
                 p={1.5}
                 borderRadius="var(--sw-radius)"
                 border="1px solid var(--sw-border-color)"
                 boxShadow="0.2rem 0.2rem 0 var(--sw-shadow-color)"
                 gap={2}
+                css={{ 
+                  "&::-webkit-scrollbar": { display: "none" }, 
+                  scrollbarWidth: "none", 
+                  WebkitOverflowScrolling: "touch" 
+                }}
               >
               {days.map((d) => (
                 <Tabs.Trigger
@@ -588,7 +603,8 @@ export default function SchedulesPage() {
                   py={{ base: 1.5, md: 2 }}
                   borderRadius="var(--sw-radius)"
                   fontWeight="700"
-                    flex={{ base: "1 1 auto", sm: "none" }}
+                    flexShrink={0}
+                    whiteSpace="nowrap"
                     justifyContent="center"
                   fontFamily="'Comfortaa', sans-serif"
                   color="var(--sw-fg)"
