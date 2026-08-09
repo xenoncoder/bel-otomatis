@@ -1,5 +1,5 @@
 import { Badge, Box, HStack, IconButton, Text, VStack, Dialog, Button } from "@chakra-ui/react";
-import { FiTrash2, FiEdit2, FiCalendar, FiMusic, FiClock, FiRepeat, FiAlertTriangle, FiPlay, FiSquare, FiCopy } from "react-icons/fi";
+import { FiTrash2, FiEdit2, FiCalendar, FiMusic, FiClock, FiRepeat, FiAlertTriangle, FiPlay, FiSquare, FiCopy, FiX } from "react-icons/fi";
 import { useState, useRef } from "react";
 import type { Recurrence, Schedule } from "@/lib/types";
 import { useT, useLang } from "@/lib/i18n";
@@ -250,7 +250,7 @@ export default function ScheduleTable({ schedules, loading, onDelete, onEdit, on
               </HStack>
             </Dialog.Body>
             <Dialog.Footer>
-              <Button className="sw-btn" variant="ghost" size="sm" onClick={() => setPendingDelete(null)}>{t("common.cancel")}</Button>
+              <Button className="sw-btn" variant="ghost" size="sm" onClick={() => setPendingDelete(null)}><Box as={FiX} /></Button>
               <Button className="sw-btn sw-btn-danger" variant="ghost" size="sm" onClick={confirmDelete}>
                 <Box as={FiTrash2} /> {t("common.delete")}
               </Button>
